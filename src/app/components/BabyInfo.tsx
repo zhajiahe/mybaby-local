@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useBaby } from '@/hooks/useBaby'
 import { useToastContext } from '@/components/providers/ToastProvider'
 import Image from 'next/image'
+import { Baby, X } from 'lucide-react'
 
 export default function BabyInfo() {
   const { baby, loading, error, createBaby, updateBaby } = useBaby()
@@ -133,10 +134,12 @@ export default function BabyInfo() {
   if (error) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="text-center">
-          <div className="text-red-500 text-xl mb-4">❌</div>
+        <div className="text-center py-12">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+            <X className="w-6 h-6 text-red-500" />
+          </div>
           <p className="text-red-600">加载失败: {error}</p>
-          <p className="text-gray-600 mt-2">
+          <p className="text-text-secondary mt-2">
             请确保已正确配置数据库连接，并运行了数据库迁移。
           </p>
         </div>
@@ -205,8 +208,10 @@ export default function BabyInfo() {
                   />
                   {!selectedAvatarFile ? (
                     <>
-                      <div className="text-4xl mb-2">👶</div>
-                      <p className="text-gray-600 mb-2">点击选择头像图片</p>
+                      <div className="w-16 h-16 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Baby className="w-8 h-8 text-primary" />
+                      </div>
+                      <p className="text-text-secondary mb-2">点击选择头像图片</p>
                       <label
                         htmlFor="avatar-upload"
                         className={`btn-secondary cursor-pointer inline-block ${uploadingAvatar ? 'opacity-50 cursor-not-allowed' : ''}`}

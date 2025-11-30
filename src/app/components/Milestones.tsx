@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBaby } from '@/hooks/useBaby'
 import { useMilestones } from '@/hooks/useMilestones'
 import { useToastContext } from '@/components/providers/ToastProvider'
+import { Trash2, X } from 'lucide-react'
+import { EmptyMilestones } from '@/components/ui/illustrations'
 
 interface Milestone {
   id: string
@@ -198,8 +200,10 @@ export default function Milestones() {
   if (error) {
     return (
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="text-center">
-          <div className="text-red-500 text-xl mb-4">❌</div>
+        <div className="text-center py-12">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+            <X className="w-6 h-6 text-red-500" />
+          </div>
           <p className="text-red-600">加载失败: {error}</p>
         </div>
       </div>
@@ -399,10 +403,10 @@ export default function Milestones() {
       {/* Milestones Timeline */}
       <div className="space-y-4">
         {filteredMilestones.length === 0 ? (
-          <div className="card text-center py-8">
-            <div className="text-6xl mb-4">🏆</div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">没有匹配的记录</h3>
-            <p className="text-gray-600 mb-4">{activeTag ? `当前筛选: #${activeTag}` : '记录宝宝的第一个吧'}</p>
+          <div className="card text-center py-12">
+            <EmptyMilestones className="w-40 h-32 mx-auto mb-6" />
+            <h3 className="text-lg font-semibold text-text-primary mb-2">没有匹配的记录</h3>
+            <p className="text-text-secondary mb-4">{activeTag ? `当前筛选: #${activeTag}` : '记录宝宝的第一个吧'}</p>
             <button
               onClick={() => activeTag ? setActiveTag(null) : setShowForm(true)}
               className="btn-primary"
@@ -463,7 +467,7 @@ export default function Milestones() {
                       className="text-red-600 hover:bg-red-100 p-2 rounded transition-colors"
                       title="删除"
                     >
-                      🗑️
+                      <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
                 </div>

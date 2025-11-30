@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import { useBaby } from '@/hooks/useBaby'
 import { useGrowthRecords } from '@/hooks/useGrowthRecords'
 import { useToastContext } from '@/components/providers/ToastProvider'
+import { Trash2, X } from 'lucide-react'
 
 interface GrowthEntry {
   id: string
@@ -272,10 +273,12 @@ export default function GrowthRecord() {
 
   if (error) {
     return (
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ color: '#ef4444', fontSize: '2rem', marginBottom: '16px' }}>❌</div>
-          <p style={{ color: '#ef4444' }}>加载失败: {error}</p>
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="text-center py-12">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+            <X className="w-6 h-6 text-red-500" />
+          </div>
+          <p className="text-red-600">加载失败: {error}</p>
         </div>
       </div>
     )
@@ -542,7 +545,7 @@ export default function GrowthRecord() {
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     title="删除记录"
                   >
-                    🗑️
+                    <Trash2 className="w-5 h-5" />
                   </button>
                 )}
                 <button

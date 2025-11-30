@@ -6,6 +6,8 @@ import { useGrowthRecords } from '@/hooks/useGrowthRecords'
 import { useMilestones } from '@/hooks/useMilestones'
 import Image from 'next/image'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { Baby, Sparkles, Camera, BarChart3, Scale, Ruler, Trophy } from 'lucide-react'
+import { EmptyMilestones } from '@/components/ui/illustrations'
 
 interface DashboardProps {
   setActiveTab: (tab: string) => void
@@ -119,9 +121,11 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
   if (!baby) {
     return (
       <div className="text-center py-12">
-        <div className="text-6xl mb-4">👶</div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">欢迎使用宝宝成长记录</h2>
-        <p className="text-gray-600 mb-6">开始记录宝宝的成长足迹吧！</p>
+        <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+          <Baby className="w-10 h-10 text-primary" />
+        </div>
+        <h2 className="text-2xl font-bold text-text-primary mb-4">欢迎使用宝宝成长记录</h2>
+        <p className="text-text-secondary mb-6">开始记录宝宝的成长足迹吧！</p>
         <button 
           onClick={() => setActiveTab('baby')}
           className="btn-primary"
@@ -157,10 +161,10 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-base md:text-xl font-bold text-gray-800 truncate mb-0.5">{baby.name}</h1>
-                  <p className="text-gray-600 text-sm md:text-base mb-0.5">{currentAge}</p>
-                  <p className="text-xs md:text-sm text-teal-600 font-medium mb-1 md:mb-2">
-                    已经 {currentDays} 天了 ✨
+                  <h1 className="text-base md:text-xl font-bold text-text-primary truncate mb-0.5">{baby.name}</h1>
+                  <p className="text-text-secondary text-sm md:text-base mb-0.5">{currentAge}</p>
+                  <p className="text-xs md:text-sm text-primary font-medium mb-1 md:mb-2 flex items-center gap-1">
+                    已经 {currentDays} 天了 <Sparkles className="w-4 h-4 inline" />
                   </p>
                   <button 
                     onClick={() => setActiveTab('baby')}
@@ -174,13 +178,13 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
           </div>
 
           {/* 体重卡片 */}
-          <div className="card p-4 bg-gradient-to-br from-blue-50 to-blue-100 min-h-[60px] md:min-h-[80px] lg:min-h-[100px]">
+          <div className="card p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/20 min-h-[60px] md:min-h-[80px] lg:min-h-[100px]">
             <div className="flex flex-col items-center text-center h-full justify-center">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center text-white text-xl mb-3">
-                ⚖️
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center text-white mb-3">
+                <Scale className="w-6 h-6" />
               </div>
-              <h3 className="text-sm font-medium text-gray-600 mb-2">最新体重</h3>
-              <p className="text-base font-bold text-gray-800">{latestWeightRecord?.weight ? `${latestWeightRecord.weight} kg` : '暂无数据'}</p>
+              <h3 className="text-sm font-medium text-text-secondary mb-2">最新体重</h3>
+              <p className="text-base font-bold text-text-primary">{latestWeightRecord?.weight ? `${latestWeightRecord.weight} kg` : '暂无数据'}</p>
               <button 
                 onClick={() => setActiveTab('growth')}
                 className="text-xs text-orange-600 hover:text-orange-800 font-medium mt-1"
@@ -191,13 +195,13 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
           </div>
 
           {/* 身高卡片 */}
-          <div className="card p-4 bg-gradient-to-br from-green-50 to-green-100 min-h-[60px] md:min-h-[80px] lg:min-h-[100px]">
+          <div className="card p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/20 min-h-[60px] md:min-h-[80px] lg:min-h-[100px]">
             <div className="flex flex-col items-center text-center h-full justify-center">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center text-white text-xl mb-3">
-                📏
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center text-white mb-3">
+                <Ruler className="w-6 h-6" />
               </div>
-              <h3 className="text-sm font-medium text-gray-600 mb-2">最新身高</h3>
-              <p className="text-base font-bold text-gray-800">{latestHeightRecord?.height ? `${latestHeightRecord.height} cm` : '暂无数据'}</p>
+              <h3 className="text-sm font-medium text-text-secondary mb-2">最新身高</h3>
+              <p className="text-base font-bold text-text-primary">{latestHeightRecord?.height ? `${latestHeightRecord.height} cm` : '暂无数据'}</p>
               <button 
                 onClick={() => setActiveTab('growth')}
                 className="text-xs text-orange-600 hover:text-orange-800 font-medium mt-1"
@@ -208,13 +212,13 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
           </div>
 
           {/* 记录数卡片 */}
-          <div className="card p-4 bg-gradient-to-br from-slate-50 to-slate-100 min-h-[60px] md:min-h-[80px] lg:min-h-[100px]">
+          <div className="card p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-700/50 min-h-[60px] md:min-h-[80px] lg:min-h-[100px]">
             <div className="flex flex-col items-center text-center h-full justify-center">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-teal-500 to-teal-600 flex items-center justify-center text-white text-xl mb-3">
-                🏆
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-teal-500 to-teal-600 flex items-center justify-center text-white mb-3">
+                <Trophy className="w-6 h-6" />
               </div>
-              <h3 className="text-sm font-medium text-gray-600 mb-2">记录数</h3>
-              <p className="text-base font-bold text-gray-800">{milestones?.length || 0} 个</p>
+              <h3 className="text-sm font-medium text-text-secondary mb-2">记录数</h3>
+              <p className="text-base font-bold text-text-primary">{milestones?.length || 0} 个</p>
               <button 
                 onClick={() => setActiveTab('milestones')}
                 className="text-xs text-orange-600 hover:text-orange-800 font-medium mt-1"
@@ -225,13 +229,13 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
           </div>
 
           {/* 新增：图片数量卡片 */}
-          <div className="card p-4 bg-gradient-to-br from-orange-50 to-red-100 min-h-[60px] md:min-h-[80px] lg:min-h-[100px]">
+          <div className="card p-4 bg-gradient-to-br from-orange-50 to-red-100 dark:from-orange-900/20 dark:to-red-900/20 min-h-[60px] md:min-h-[80px] lg:min-h-[100px]">
             <div className="flex flex-col items-center text-center h-full justify-center">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-orange-500 to-red-600 flex items-center justify-center text-white text-xl mb-3">
-                📸
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-orange-500 to-red-600 flex items-center justify-center text-white mb-3">
+                <Camera className="w-6 h-6" />
               </div>
-              <h3 className="text-sm font-medium text-gray-600 mb-2">图片数量</h3>
-              <p className="text-base font-bold text-gray-800">{baby._count?.mediaItems || 0} 张</p>
+              <h3 className="text-sm font-medium text-text-secondary mb-2">图片数量</h3>
+              <p className="text-base font-bold text-text-primary">{baby._count?.mediaItems || 0} 张</p>
               <button 
                 onClick={() => setActiveTab('photos')}
                 className="text-xs text-orange-600 hover:text-orange-800 font-medium mt-1"
@@ -285,10 +289,10 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 text-gray-500 flex-1 flex flex-col justify-center">
-                <span className="text-4xl mb-4 block">🏆</span>
-                <p className="text-base mb-2">还没有记录</p>
-                <p className="text-sm text-gray-400">记录宝宝的重要成长时刻</p>
+              <div className="text-center py-8 flex-1 flex flex-col justify-center">
+                <EmptyMilestones className="w-32 h-24 mx-auto mb-4" />
+                <p className="text-base mb-2 text-text-secondary">还没有记录</p>
+                <p className="text-sm text-text-muted">记录宝宝的重要成长时刻</p>
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
@@ -427,14 +431,16 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
               </div>
             ) : (
               <div className="flex-1 flex flex-col justify-center">
-                <div className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-xl shadow-inner">
+                <div className="text-center py-16 bg-card-bg/80 backdrop-blur-sm rounded-xl shadow-inner">
                   <div className="mb-6">
-                    <span className="text-6xl block mb-2">📊</span>
+                    <div className="w-16 h-16 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
+                      <BarChart3 className="w-8 h-8 text-primary" />
+                    </div>
                     <div className="w-16 h-1 bg-gradient-to-r from-emerald-400 to-teal-400 rounded mx-auto"></div>
                   </div>
-                  <h4 className="text-lg font-bold text-gray-800 mb-3">开始记录成长数据</h4>
-                  <p className="text-gray-600 text-base mb-2">还没有成长记录</p>
-                  <p className="text-sm text-gray-500">添加至少2条记录即可查看美丽的成长趋势图</p>
+                  <h4 className="text-lg font-bold text-text-primary mb-3">开始记录成长数据</h4>
+                  <p className="text-text-secondary text-base mb-2">还没有成长记录</p>
+                  <p className="text-sm text-text-muted">添加至少2条记录即可查看美丽的成长趋势图</p>
                 </div>
               </div>
             )}

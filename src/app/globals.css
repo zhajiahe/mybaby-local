@@ -1,11 +1,18 @@
 @import "tailwindcss";
 
+/* 引入 Google Fonts - Noto Sans SC */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap');
+
 @theme {
   --color-primary: #0d9488;
   --color-primary-light: #14b8a6;
   --color-primary-dark: #0f766e;
   --color-accent: #f59e0b;
   --color-accent-light: #fbbf24;
+  --color-secondary: #f0abfc;
+  --color-secondary-light: #f5d0fe;
+  --color-warm: #fda4af;
+  --color-warm-light: #fecdd3;
 }
 
 :root {
@@ -16,6 +23,11 @@
   --text-primary: #1f2937;
   --text-secondary: #6b7280;
   --text-muted: #9ca3af;
+  
+  /* 动画时长 */
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -33,7 +45,96 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Noto Sans SC', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ======== 动画定义 ======== */
+
+/* 淡入上移 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 淡入 */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 缩放进入 */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 弹跳 */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* 脉冲 */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* 闪烁 */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* 动画类 */
+.animate-fade-in-up {
+  animation: fadeInUp var(--duration-slow) ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn var(--duration-normal) ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--duration-slow) ease-out forwards;
+}
+
+/* 列表项错落动画 */
+.animate-stagger > * {
+  animation: fadeInUp var(--duration-slow) ease-out forwards;
+  opacity: 0;
+}
+.animate-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.animate-stagger > *:nth-child(2) { animation-delay: 50ms; }
+.animate-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.animate-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.animate-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.animate-stagger > *:nth-child(6) { animation-delay: 250ms; }
+
+/* 骨架屏动画 */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--card-border) 25%,
+    var(--card-bg) 50%,
+    var(--card-border) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }
 
 /* 移动端安全区域 */
@@ -48,14 +149,15 @@ body {
   }
 }
 
-/* Component styles */
+/* ======== 组件样式 ======== */
+
 .card {
   background-color: var(--card-bg);
   border-radius: 1rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
   padding: 1.5rem;
   border: 1px solid var(--card-border);
-  transition: box-shadow 0.2s;
+  transition: transform var(--duration-normal), box-shadow var(--duration-normal), border-color var(--duration-normal);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -65,69 +167,142 @@ body {
 }
 
 .card:hover {
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px -4px rgb(0 0 0 / 0.1), 0 4px 8px -4px rgb(0 0 0 / 0.06);
+  border-color: var(--color-primary-light);
 }
 
 @media (prefers-color-scheme: dark) {
   .card:hover {
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+    box-shadow: 0 8px 16px -4px rgb(0 0 0 / 0.4);
   }
 }
 
+/* 可点击卡片 */
+.card-clickable {
+  cursor: pointer;
+}
+
+.card-clickable:active {
+  transform: translateY(0) scale(0.99);
+}
+
+/* ======== 按钮样式 ======== */
+
 .btn-primary {
-  background: linear-gradient(to right, #0d9488, #14b8a6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
   color: white;
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
   font-weight: 500;
-  transition: all 0.2s;
+  transition: all var(--duration-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #14b8a6 0%, #2dd4bf 100%);
+  opacity: 0;
+  transition: opacity var(--duration-normal);
+}
+
+.btn-primary:hover::before {
+  opacity: 1;
 }
 
 .btn-primary:hover {
-  background: linear-gradient(to right, #14b8a6, #2dd4bf);
-  box-shadow: 0 10px 15px -3px rgb(20 184 166 / 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -4px rgb(20 184 166 / 0.4);
 }
 
 .btn-primary:active {
-  transform: scale(0.98);
+  transform: translateY(0) scale(0.98);
+  box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.1);
 }
 
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-primary > * {
+  position: relative;
+  z-index: 1;
 }
 
 .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   background-color: var(--card-bg);
   color: var(--text-secondary);
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
   font-weight: 500;
   border: 1px solid var(--card-border);
-  transition: all 0.2s;
+  transition: all var(--duration-normal);
 }
 
 .btn-secondary:hover {
   background-color: var(--card-border);
   border-color: var(--text-muted);
+  transform: translateY(-1px);
 }
 
 .btn-secondary:active {
-  transform: scale(0.98);
+  transform: translateY(0) scale(0.98);
 }
 
 .btn-danger {
-  background: linear-gradient(to right, #e11d48, #f43f5e);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #e11d48 0%, #f43f5e 100%);
   color: white;
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
   font-weight: 500;
-  transition: all 0.2s;
+  transition: all var(--duration-normal);
 }
 
 .btn-danger:hover {
-  background: linear-gradient(to right, #f43f5e, #fb7185);
-  box-shadow: 0 10px 15px -3px rgb(244 63 94 / 0.25);
+  background: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -4px rgb(244 63 94 / 0.4);
+}
+
+.btn-danger:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* 图标按钮 */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.625rem;
+  transition: all var(--duration-fast);
+}
+
+.btn-icon:hover {
+  background-color: var(--card-border);
+}
+
+.btn-icon:active {
+  transform: scale(0.95);
 }
 
 .input-field {
@@ -136,18 +311,53 @@ body {
   border: 1px solid var(--card-border);
   border-radius: 0.75rem;
   outline: none;
-  transition: all 0.2s;
+  transition: all var(--duration-normal);
   background-color: var(--card-bg);
   color: var(--text-primary);
 }
 
+.input-field:hover {
+  border-color: var(--text-muted);
+}
+
 .input-field:focus {
-  border-color: #14b8a6;
-  box-shadow: 0 0 0 3px rgb(20 184 166 / 0.2);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgb(20 184 166 / 0.15);
+  transform: translateY(-1px);
 }
 
 .input-field::placeholder {
   color: var(--text-muted);
+}
+
+/* 文本域 */
+textarea.input-field {
+  resize: vertical;
+  min-height: 5rem;
+}
+
+/* 标签化输入框 */
+.input-with-label {
+  position: relative;
+}
+
+.input-with-label label {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  transition: all var(--duration-fast);
+  pointer-events: none;
+  background: var(--card-bg);
+  padding: 0 0.25rem;
+}
+
+.input-with-label .input-field:focus + label,
+.input-with-label .input-field:not(:placeholder-shown) + label {
+  top: 0;
+  font-size: 0.75rem;
+  color: var(--color-primary);
 }
 
 .milestone-badge {

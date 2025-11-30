@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react' // Added useRef
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
+import { Camera, Calendar, Clock, Upload, X, Trash2, Image as ImageIcon, Film } from 'lucide-react'
 import { useBaby } from '@/hooks/useBaby'
 import { useToastContext } from '@/components/providers/ToastProvider'
+import { EmptyPhotos } from '@/components/ui/illustrations'
 
 interface MediaItem { // Renamed from Photo
   id: string;
@@ -473,7 +475,9 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
     return (
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="text-center py-12">
-          <div className="text-red-500 text-xl mb-4">❌</div>
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+            <X className="w-6 h-6 text-red-500" />
+          </div>
           <p className="text-red-600">加载失败: {error}</p>
         </div>
       </div>
@@ -497,15 +501,19 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
       </div>
 
       {/* Stats - 移动端横向滚动或3列 */}
-      <div className="grid grid-cols-3 gap-2 md:gap-6">
+      <div className="grid grid-cols-3 gap-2 md:gap-6 animate-stagger">
         <div className="card text-center p-3 md:p-6">
-          <div className="text-xl md:text-3xl mb-1 md:mb-2">📸</div>
+          <div className="w-8 h-8 md:w-12 md:h-12 mx-auto mb-1 md:mb-2 rounded-full bg-blue-100 flex items-center justify-center">
+            <Camera className="w-4 h-4 md:w-6 md:h-6 text-blue-600" />
+          </div>
           <p className="text-xs md:text-sm text-gray-600 mb-0.5 md:mb-1">总媒体数</p>
           <p className="text-lg md:text-2xl font-bold text-blue-600">{mediaItems.length}</p>
         </div>
 
         <div className="card text-center p-3 md:p-6">
-          <div className="text-xl md:text-3xl mb-1 md:mb-2">📅</div>
+          <div className="w-8 h-8 md:w-12 md:h-12 mx-auto mb-1 md:mb-2 rounded-full bg-green-100 flex items-center justify-center">
+            <Calendar className="w-4 h-4 md:w-6 md:h-6 text-green-600" />
+          </div>
           <p className="text-xs md:text-sm text-gray-600 mb-0.5 md:mb-1">最新</p>
           <p className="text-sm md:text-2xl font-bold text-green-600 truncate">
             {mediaItems[0]?.date ? formatDateDisplay(mediaItems[0].date) : '暂无'}
@@ -513,7 +521,9 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
         </div>
 
         <div className="card text-center p-3 md:p-6">
-          <div className="text-xl md:text-3xl mb-1 md:mb-2">🎂</div>
+          <div className="w-8 h-8 md:w-12 md:h-12 mx-auto mb-1 md:mb-2 rounded-full bg-teal-100 flex items-center justify-center">
+            <Clock className="w-4 h-4 md:w-6 md:h-6 text-teal-600" />
+          </div>
           <p className="text-xs md:text-sm text-gray-600 mb-0.5 md:mb-1">时长</p>
           <p className="text-lg md:text-2xl font-bold text-teal-600">
             {Object.keys(groupedMediaItems).length}月
@@ -576,9 +586,11 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
                     onChange={(e) => handleFileSelect(e.target.files)}
                     disabled={isUploading}
                   />
-                  <div className="text-4xl mb-2">📁</div>
-                  <p className="text-gray-600 mb-1">拖拽文件到这里，或点击选择</p>
-                  <p className="text-xs text-gray-400">支持图片和视频，单个文件最大 200MB</p>
+                  <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Upload className="w-6 h-6 text-primary" />
+                  </div>
+                  <p className="text-text-primary mb-1 font-medium">拖拽文件到这里，或点击选择</p>
+                  <p className="text-xs text-text-muted">支持图片和视频，单个文件最大 200MB</p>
                 </div>
               </div>
 
@@ -624,8 +636,12 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
                         }`}
                       >
                         {/* 文件类型图标 */}
-                        <div className="text-2xl flex-shrink-0">
-                          {item.file.type.startsWith('image/') ? '🖼️' : '🎬'}
+                        <div className="flex-shrink-0">
+                          {item.file.type.startsWith('image/') ? (
+                            <ImageIcon className="w-6 h-6 text-blue-500" />
+                          ) : (
+                            <Film className="w-6 h-6 text-purple-500" />
+                          )}
                         </div>
                         
                         {/* 文件信息 */}
@@ -774,7 +790,7 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
                         className="text-red-500 hover:text-red-700 text-sm px-3 py-1 border border-red-300 rounded hover:bg-red-50 transition-colors"
                         title="删除媒体文件"
                       >
-                        🗑️ 删除
+                        <Trash2 className="w-4 h-4 mr-1" /> 删除
                       </button>
                     </>
                   ) : (
@@ -793,7 +809,7 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
                         className="text-gray-500 hover:text-gray-700 text-sm px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
                         title="取消编辑"
                       >
-                        ❌ 取消
+                        <X className="w-4 h-4 mr-1" /> 取消
                       </button>
                     </>
                   )}
@@ -868,11 +884,17 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
               </div>
               
               <div className="space-y-3">
-                <div className="flex items-center space-x-4 text-sm text-gray-600">
-                  <span>📅 {selectedMediaItem.date}</span>
-                  <span>🎂 {selectedMediaItem.age}</span>
+                <div className="flex items-center flex-wrap gap-4 text-sm text-text-secondary">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" /> {selectedMediaItem.date}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" /> {selectedMediaItem.age}
+                  </span>
                   {selectedMediaItem.mediaType === 'VIDEO' && selectedMediaItem.duration && (
-                    <span>⏱️ {formatDuration(selectedMediaItem.duration)}</span>
+                    <span className="flex items-center gap-1">
+                      <Film className="w-4 h-4" /> {formatDuration(selectedMediaItem.duration)}
+                    </span>
                   )}
                   {imageDimensions && (
                     <span>📐 {imageDimensions.width} × {imageDimensions.height}</span>
@@ -915,10 +937,10 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
           .sort(([a], [b]) => b.localeCompare(a))
           .map(([month, monthItems]) => ( // Renamed from monthPhotos
           <div key={month} className="space-y-4">
-            <h3 className="text-lg font-bold text-gray-800 flex items-center">
-              <span className="mr-2">📅</span>
+            <h3 className="text-lg font-bold text-text-primary flex items-center">
+              <Calendar className="w-5 h-5 mr-2 text-primary" />
               {month}
-              <span className="ml-2 text-sm text-gray-500">({monthItems.length} 个媒体)</span>
+              <span className="ml-2 text-sm text-text-muted font-normal">({monthItems.length} 个媒体)</span>
             </h3>
             
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
@@ -1007,15 +1029,16 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
         ))}
       </div>
 
-      {mediaItems.length === 0 && ( // Renamed from photos
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">📸🎬</div>
-          <h3 className="text-xl font-bold text-gray-800 mb-2">还没有上传任何媒体</h3>
-          <p className="text-gray-600 mb-4">开始记录宝宝的珍贵时刻吧！</p>
+      {mediaItems.length === 0 && (
+        <div className="text-center py-8 md:py-12 animate-fade-in-up">
+          <EmptyPhotos className="w-40 h-32 md:w-48 md:h-40 mx-auto mb-4" />
+          <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-2">还没有上传任何媒体</h3>
+          <p className="text-sm md:text-base text-gray-600 mb-6">开始记录宝宝的珍贵时刻吧！</p>
           <button
             onClick={() => setShowUploadForm(true)}
             className="btn-primary"
           >
+            <Upload className="w-4 h-4" />
             上传第一个文件
           </button>
         </div>

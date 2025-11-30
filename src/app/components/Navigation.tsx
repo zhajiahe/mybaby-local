@@ -1,15 +1,23 @@
 'use client'
 
+import { Home, TrendingUp, Award, Camera, type LucideIcon } from 'lucide-react'
+
 interface NavigationProps {
   activeTab: string
   setActiveTab: (tab: string) => void
 }
 
-const navItems = [
-  { id: 'dashboard', label: '首页', icon: '🏠' },
-  { id: 'growth', label: '成长记录', icon: '📊' },
-  { id: 'milestones', label: '随心记', icon: '🏆' },
-  { id: 'photos', label: '照片墙', icon: '📸' },
+interface NavItem {
+  id: string
+  label: string
+  icon: LucideIcon
+}
+
+const navItems: NavItem[] = [
+  { id: 'dashboard', label: '首页', icon: Home },
+  { id: 'growth', label: '成长记录', icon: TrendingUp },
+  { id: 'milestones', label: '随心记', icon: Award },
+  { id: 'photos', label: '照片墙', icon: Camera },
 ]
 
 export default function Navigation({ activeTab, setActiveTab }: NavigationProps) {
@@ -24,20 +32,23 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
             </div>
             
             <div className="flex space-x-1">
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 ${
-                    activeTab === item.id
-                      ? 'bg-teal-600 text-white font-semibold'
-                      : 'nav-item-inactive'
-                  }`}
-                >
-                  <span className="text-sm">{item.icon}</span>
-                  <span className="font-medium text-sm">{item.label}</span>
-                </button>
-              ))}
+              {navItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 ${
+                      activeTab === item.id
+                        ? 'bg-teal-600 text-white font-semibold'
+                        : 'nav-item-inactive'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="font-medium text-sm">{item.label}</span>
+                  </button>
+                )
+              })}
             </div>
           </div>
         </div>
@@ -53,20 +64,27 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
       {/* 移动端底部导航 */}
       <nav className="nav-bar-bottom fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-bottom">
         <div className="grid grid-cols-4 h-16">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center justify-center gap-0.5 transition-colors ${
-                activeTab === item.id
-                  ? 'text-teal-500'
-                  : 'nav-item-inactive'
-              }`}
-            >
-              <span className="text-xl">{item.icon}</span>
-              <span className="text-xs font-medium">{item.label}</span>
-            </button>
-          ))}
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const isActive = activeTab === item.id
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`flex flex-col items-center justify-center gap-0.5 transition-all duration-200 ${
+                  isActive
+                    ? 'text-teal-500'
+                    : 'nav-item-inactive'
+                }`}
+              >
+                <Icon 
+                  className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`} 
+                  strokeWidth={isActive ? 2.5 : 2}
+                />
+                <span className="text-xs font-medium">{item.label}</span>
+              </button>
+            )
+          })}
         </div>
       </nav>
     </>
