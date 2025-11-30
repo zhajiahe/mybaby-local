@@ -188,7 +188,7 @@ export default function Milestones() {
     return (
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-teal-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">加载中...</p>
         </div>
       </div>
@@ -228,7 +228,7 @@ export default function Milestones() {
             <h3 className="text-lg font-bold text-gray-800">热门标签</h3>
             {activeTag && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-purple-700 bg-purple-100 px-2 py-1 rounded-full">已选: #{activeTag}</span>
+                <span className="text-sm text-teal-700 bg-teal-100 px-2 py-1 rounded-full">已选: #{activeTag}</span>
                 <button className="text-xs text-gray-600 hover:text-red-600" onClick={() => setActiveTag(null)}>清除</button>
               </div>
             )}
@@ -238,11 +238,11 @@ export default function Milestones() {
               <button
                 key={tag}
                 onClick={() => setActiveTag(prev => prev === tag ? null : tag)}
-                className={`text-center p-1 rounded-lg transition-colors ${activeTag === tag ? 'bg-purple-200' : 'bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200'}`}
+                className={`text-center p-1 rounded-lg transition-colors ${activeTag === tag ? 'bg-teal-200' : 'bg-gradient-to-br from-slate-50 to-slate-100 hover:from-teal-50 hover:to-teal-100'}`}
               >
                 <div className="text-2xl mb-1">🏷️</div>
                 <div className="text-sm text-gray-700 mb-1">{tag}</div>
-                <div className="text-sm font-bold text-purple-700">{count}</div>
+                <div className="text-sm font-bold text-teal-700">{count}</div>
               </button>
             ))}
           </div>
@@ -254,7 +254,7 @@ export default function Milestones() {
         <div className="card text-center">
           <div className="text-3xl mb-2">🏆</div>
           <div className="text-sm text-gray-600 mb-1">总记录</div>
-          <div className="text-2xl font-bold text-purple-600">{milestones.length}</div>
+          <div className="text-2xl font-bold text-teal-600">{milestones.length}</div>
         </div>
 
         <div className="card text-center">
@@ -369,8 +369,8 @@ export default function Milestones() {
                             disabled={isSelected}
                             className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium transition-colors ${
                               isSelected
-                                ? 'bg-purple-200 text-purple-800 cursor-not-allowed opacity-50'
-                                : 'bg-gray-100 text-gray-700 hover:bg-purple-100 hover:text-purple-700 cursor-pointer'
+                                ? 'bg-teal-200 text-teal-800 cursor-not-allowed opacity-50'
+                                : 'bg-gray-100 text-gray-700 hover:bg-teal-100 hover:text-teal-700 cursor-pointer'
                             }`}
                           >
                             #{tag} {isSelected && '✓'}
@@ -440,7 +440,7 @@ export default function Milestones() {
                           <button
                             key={index}
                             onClick={() => setActiveTag(prev => prev === tag ? null : tag)}
-                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium transition-colors ${activeTag === tag ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-600 hover:bg-purple-200'}`}
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium transition-colors ${activeTag === tag ? 'bg-teal-600 text-white' : 'bg-teal-100 text-teal-600 hover:bg-teal-200'}`}
                           >
                             #{tag}
                           </button>

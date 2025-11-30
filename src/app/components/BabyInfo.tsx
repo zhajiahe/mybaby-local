@@ -123,7 +123,7 @@ export default function BabyInfo() {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-teal-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">加载中...</p>
         </div>
       </div>
@@ -173,10 +173,10 @@ export default function BabyInfo() {
                 alt="宝宝头像"
                 width={128}
                 height={128}
-                className="w-32 h-32 rounded-full object-cover border-4 border-pink-200"
+                className="w-32 h-32 rounded-full object-cover border-4 border-teal-200"
               />
             ) : (
-              <div className="w-32 h-32 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center text-white text-5xl border-4 border-pink-200">
+              <div className="w-32 h-32 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white text-5xl border-4 border-teal-200">
                 {babyInfo.gender === 'boy' ? '👦' : '👧'}
               </div>
             )}
@@ -391,7 +391,7 @@ export default function BabyInfo() {
             )}
           </div>
 
-          <div className="text-center p-4 bg-purple-50 rounded-lg">
+          <div className="text-center p-4 bg-slate-50 rounded-lg">
             <div className="text-3xl mb-2">🔄</div>
             <div className="text-sm text-gray-600 mb-1">出生头围</div>
             {isEditing ? (
@@ -404,7 +404,7 @@ export default function BabyInfo() {
                 placeholder="cm"
               />
             ) : (
-              <div className="text-2xl font-bold text-purple-600">
+              <div className="text-2xl font-bold text-teal-600">
                 {babyInfo.birthHeadCircumference ? `${babyInfo.birthHeadCircumference} cm` : '未设置'}
               </div>
             )}

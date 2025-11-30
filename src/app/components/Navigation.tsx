@@ -27,10 +27,10 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-200 ${
                   activeTab === item.id
-                    ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-teal-600 text-white font-semibold'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
                 {/* <span className="text-lg">{item.icon}</span> */}

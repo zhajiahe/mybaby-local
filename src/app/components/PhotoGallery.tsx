@@ -41,7 +41,7 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
   const toast = useToastContext()
   const fileInputRef = useRef<HTMLInputElement>(null); // Ref for file input
 
-  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+  const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
   
   // Debug logging
   console.log('PhotoGallery - baby:', baby)
@@ -50,16 +50,23 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
   
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]) // Renamed from photos, updated type
 
-  const [selectedMediaItem, setSelectedMediaItem] = useState<MediaItem | null>(null); // Renamed from selectedPhoto
+  const [selectedMediaItem, setSelectedMediaItem] = useState<MediaItem | null>(null);
   const [showUploadForm, setShowUploadForm] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [newMediaItemData, setNewMediaItemData] = useState({ // Renamed from newPhoto
-    date: new Date().toISOString().split('T')[0],
-    title: '',
-    description: ''
-  });
+
+  // 统一上传相关状态
+  interface UploadFileItem {
+    id: string;
+    file: File;
+    title: string;
+    status: 'pending' | 'uploading' | 'success' | 'error';
+    progress: number;
+    errorMessage?: string;
+    uploadedUrl?: string;
+  }
+  const [uploadFiles, setUploadFiles] = useState<UploadFileItem[]>([]);
+  const [uploadDate, setUploadDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isUploading, setIsUploading] = useState(false);
 
   // 新增：编辑功能状态
   const [isEditing, setIsEditing] = useState(false);
@@ -212,10 +219,7 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
   const handleSaveEdit = async () => {
     if (!selectedMediaItem) return;
     
-    if (!editFormData.title.trim()) {
-      toast.error('验证失败', '标题不能为空');
-      return;
-    }
+    // title is now optional - no validation required
 
     setIsSaving(true);
     try {
@@ -223,7 +227,7 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: editFormData.title.trim(),
+          title: editFormData.title.trim(), // empty string is allowed
           description: editFormData.description.trim() || null
         })
       });
@@ -259,154 +263,156 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
     }
   };
 
-  // Renamed from handleUploadPhoto to handleUploadMediaItem
-  const handleUploadMediaItem = async () => {
-    if (selectedFile && selectedFile.size > MAX_FILE_SIZE) {
-      const errorMsg = `文件大小不能超过 ${MAX_FILE_SIZE / (1024 * 1024)}MB。`;
-      console.error('Validation error:', errorMsg)
-      toast.error('上传失败', errorMsg)
-      setUploadError(errorMsg)
-      // Clear the file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+  // 处理文件选择
+  const handleFileSelect = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    
+    const newItems: UploadFileItem[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error('文件过大', `文件 "${file.name}" 超过 ${MAX_FILE_SIZE / (1024 * 1024)}MB 限制`);
+        continue;
       }
-      setSelectedFile(null);
-      return;
+      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+        toast.error('不支持的文件类型', `文件 "${file.name}" 不是图片或视频`);
+        continue;
+      }
+      newItems.push({
+        id: `${Date.now()}-${i}-${Math.random().toString(36).substr(2, 9)}`,
+        file,
+        title: '', // 标题为空，可选填写
+        status: 'pending',
+        progress: 0,
+      });
     }
+    
+    setUploadFiles(prev => [...prev, ...newItems]);
+  };
 
-    console.log('Starting upload process...')
-    console.log('Baby:', baby)
-    console.log('Selected file:', selectedFile)
-    console.log('Form data:', newMediaItemData)
+  // 更新文件标题
+  const updateFileTitle = (id: string, title: string) => {
+    setUploadFiles(prev => prev.map(item => 
+      item.id === id ? { ...item, title } : item
+    ));
+  };
 
-    if (!selectedFile) {
-      const error = '请选择一个文件进行上传。'
-      console.error('Validation error:', error)
-      toast.error('上传失败', error)
-      setUploadError(error)
-      return;
-    }
-    if (!newMediaItemData.title) {
-      const error = '请填写标题。'
-      console.error('Validation error:', error)
-      toast.error('验证失败', error)
-      setUploadError(error)
-      return;
-    }
+  // 移除文件
+  const removeFile = (id: string) => {
+    setUploadFiles(prev => prev.filter(item => item.id !== id));
+  };
 
+  // 清空所有文件
+  const clearAllFiles = () => {
+    setUploadFiles([]);
+  };
+
+  // 上传处理 - 使用后端处理视频封面
+  const handleUpload = async () => {
     if (!baby?.id) {
-      const error = '请先创建宝宝信息。'
-      console.error('Validation error:', error)
-      toast.error('验证失败', error)
-      setUploadError(error)
+      toast.error('验证失败', '请先创建宝宝信息。');
+      return;
+    }
+    if (uploadFiles.length === 0) {
+      toast.error('验证失败', '请先选择要上传的文件。');
       return;
     }
 
     setIsUploading(true);
-    setUploadError(null);
+    const successfulItems: MediaItem[] = [];
 
-    try {
-      // Step 1: Get pre-signed URL from our new API route
-      console.log('Step 1: Getting pre-signed URL...');
-      const presignedUrlResponse = await fetch('/api/photos/generate-upload-url', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          filename: selectedFile!.name, // selectedFile is guaranteed to be non-null here
-          contentType: selectedFile!.type,
-        }),
-      });
+    // 逐个上传文件
+    for (let i = 0; i < uploadFiles.length; i++) {
+      const item = uploadFiles[i];
+      
+      // 更新状态为上传中
+      setUploadFiles(prev => prev.map(f => 
+        f.id === item.id ? { ...f, status: 'uploading' as const, progress: 0 } : f
+      ));
 
-      if (!presignedUrlResponse.ok) {
-        const errorData = await presignedUrlResponse.json();
-        throw new Error(errorData.error || `获取上传授权失败 (HTTP ${presignedUrlResponse.status})`);
+      try {
+        // 使用后端上传 API 处理文件（包括视频封面生成）
+        const formData = new FormData();
+        formData.append('file', item.file);
+
+        // 更新进度到 20%
+        setUploadFiles(prev => prev.map(f => 
+          f.id === item.id ? { ...f, progress: 20 } : f
+        ));
+
+        const uploadResponse = await fetch('/api/photos/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json();
+          throw new Error(errorData.error || '上传文件失败');
+        }
+
+        const uploadResult = await uploadResponse.json();
+
+        // 更新进度到 70%
+        setUploadFiles(prev => prev.map(f => 
+          f.id === item.id ? { ...f, progress: 70, uploadedUrl: uploadResult.url } : f
+        ));
+
+        // 保存元数据到数据库
+        const mediaDataForDb = {
+          babyId: baby.id,
+          date: uploadDate,
+          title: item.title || '', // 标题可以为空
+          url: uploadResult.url,
+          mediaType: uploadResult.mediaType,
+          format: uploadResult.format,
+          thumbnailUrl: uploadResult.thumbnailUrl || null,
+          duration: uploadResult.duration || null,
+        };
+
+        const saveResponse = await fetch('/api/photos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(mediaDataForDb),
+        });
+
+        if (!saveResponse.ok) {
+          const errorData = await saveResponse.json();
+          throw new Error(errorData.error || '保存媒体信息失败');
+        }
+
+        const savedItem = await saveResponse.json();
+        successfulItems.push({
+          ...savedItem,
+          age: calculateAge(savedItem.date),
+        });
+
+        // 更新状态为成功
+        setUploadFiles(prev => prev.map(f => 
+          f.id === item.id ? { ...f, status: 'success' as const, progress: 100 } : f
+        ));
+
+      } catch (error) {
+        console.error(`Failed to upload ${item.file.name}:`, error);
+        const errorMessage = error instanceof Error ? error.message : '上传失败';
+        setUploadFiles(prev => prev.map(f => 
+          f.id === item.id ? { ...f, status: 'error' as const, errorMessage } : f
+        ));
       }
+    }
 
-      const { uploadUrl, key: r2ObjectKey, publicUrl: r2PublicUrl } = await presignedUrlResponse.json();
-      console.log('Received pre-signed URL:', uploadUrl);
-      console.log('R2 Object Key:', r2ObjectKey);
-      console.log('R2 Public URL:', r2PublicUrl);
+    // 添加成功上传的媒体到列表
+    if (successfulItems.length > 0) {
+      setMediaItems(prev => [...successfulItems, ...prev]);
+      toast.success('上传完成', `成功上传 ${successfulItems.length} 个文件`);
+    }
 
-      // Step 2: Upload the file directly to R2 using the pre-signed URL
-      console.log('Step 2: Uploading file to R2...');
-      const r2UploadResponse = await fetch(uploadUrl, {
-        method: 'PUT',
-        body: selectedFile,
-      });
-
-      if (!r2UploadResponse.ok) {
-        // Attempt to get error details from R2, though it might be opaque
-        const r2ErrorText = await r2UploadResponse.text();
-        console.error('R2 Upload Error Response Text:', r2ErrorText);
-        throw new Error(`上传文件到存储服务失败 (HTTP ${r2UploadResponse.status}). ${r2ErrorText ? 'Details: '+r2ErrorText.substring(0,100) : ''}`);
-      }
-
-      console.log('File uploaded to R2 successfully!');
-
-      // Step 3: Save media item metadata to our database (this part will be fully implemented later)
-      // For now, we'll log the data that would be sent.
-      // The actual /api/photos POST request will need to be updated to handle new fields if necessary (e.g. no thumbnailUrl, duration yet)
-      // and it might not return the full media item with ID immediately if thumbnail/duration processing is async.
-
-      const mediaDataForDb = {
-        babyId: baby!.id, // baby is guaranteed to be non-null here
-        date: newMediaItemData.date,
-        title: newMediaItemData.title,
-        description: newMediaItemData.description || null,
-        url: r2PublicUrl, // This is the final public URL from R2
-        mediaType: selectedFile!.type.startsWith('image/') ? 'IMAGE' : 'VIDEO',
-        format: selectedFile!.type.split('/')[1] || selectedFile!.type, // Fallback to full type if split fails
-        thumbnailUrl: null, // Simplified handling, no client-side thumbnail generation
-        duration: null,     // Simplified handling, no client-side duration extraction
-      };
-
-      console.log('Step 3: Saving media metadata to database...', mediaDataForDb);
-
-      const saveMediaResponse = await fetch('/api/photos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mediaDataForDb),
-      });
-
-      if (!saveMediaResponse.ok) {
-        const errorData = await saveMediaResponse.json();
-        throw new Error(errorData.error || `保存媒体信息失败 (HTTP ${saveMediaResponse.status})`);
-      }
-
-      const savedMediaItemWithId = await saveMediaResponse.json();
-      console.log('Saved media item:', savedMediaItemWithId);
-
-      // Update UI
-      const finalMediaItemObject: MediaItem = {
-        ...savedMediaItemWithId, // This should include id, url, title, date, etc. from DB
-        age: calculateAge(savedMediaItemWithId.date), // Calculate age client-side
-        // Ensure mediaType and format from DB are used, or fall back if not present in savedMediaItemWithId
-        mediaType: savedMediaItemWithId.mediaType || mediaDataForDb.mediaType,
-        format: savedMediaItemWithId.format || mediaDataForDb.format,
-        thumbnailUrl: savedMediaItemWithId.thumbnailUrl, // Will be null for now
-        duration: savedMediaItemWithId.duration,       // Will be null for now
-      };
-
-      setMediaItems(prev => [finalMediaItemObject, ...prev]);
-
-      toast.success('上传成功', '文件已成功上传并保存媒体信息！');
-      setNewMediaItemData({ date: new Date().toISOString().split('T')[0], title: '', description: '' });
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+    setIsUploading(false);
+    
+    // 如果全部成功，清空并关闭
+    const hasErrors = uploadFiles.some(f => f.status === 'error');
+    if (!hasErrors && successfulItems.length === uploadFiles.length) {
+      setUploadFiles([]);
       setShowUploadForm(false);
-
-    } catch (error) {
-      console.error('Upload process failed:', error);
-      const errorMessage = error instanceof Error ? error.message : '发生未知错误。';
-      console.error('Error message:', errorMessage)
-      setUploadError(errorMessage);
-      toast.error('上传失败', errorMessage)
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -455,7 +461,7 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
     return (
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-teal-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">加载中...</p>
         </div>
       </div>
@@ -508,145 +514,214 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
         <div className="card text-center">
           <div className="text-3xl mb-2">🎂</div>
           <p className="text-sm text-gray-600 mb-1">记录时长</p>
-          <p className="text-2xl font-bold text-purple-600">
+          <p className="text-2xl font-bold text-teal-600">
             {Object.keys(groupedMediaItems).length} 个月
           </p>
         </div>
       </div>
 
-      {/* Upload Form */}
+      {/* Upload Form - 统一的多文件上传界面 */}
       {showUploadForm && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', zIndex: 50 }}>
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">上传新媒体</h3>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', zIndex: 50 }}>
+          <div className="bg-white rounded-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-gray-800">上传媒体文件</h3>
+              <button
+                onClick={() => {
+                  if (isUploading) return;
+                  setShowUploadForm(false);
+                  setUploadFiles([]);
+                  setUploadError(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+                disabled={isUploading}
+              >
+                ×
+              </button>
+            </div>
+
             {uploadError && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
                 <strong className="font-bold">发生错误: </strong>
                 <span className="block sm:inline">{uploadError}</span>
               </div>
             )}
+
             <div className="space-y-4">
+              {/* 文件选择区域 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  选择文件 (图片或视频)
+                  选择文件 (支持多选，图片/视频)
                 </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <div 
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-teal-400 transition-colors cursor-pointer"
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.add('border-teal-400', 'bg-teal-50'); }}
+                  onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.remove('border-teal-400', 'bg-teal-50'); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.currentTarget.classList.remove('border-teal-400', 'bg-teal-50');
+                    handleFileSelect(e.dataTransfer.files);
+                  }}
+                  onClick={() => document.getElementById('media-upload')?.click()}
+                >
                   <input
                     type="file"
-                    accept="image/*,video/*" // Updated accept attribute
+                    accept="image/*,video/*"
+                    multiple
                     className="hidden"
-                    id="media-upload" // Changed id for clarity
-                    ref={fileInputRef} // Added ref
-                    onChange={(e) => {
-                      const file = e.target.files ? e.target.files[0] : null;
-                      if (file) {
-                        if (file.size > MAX_FILE_SIZE) {
-                          const errorMsg = `文件 "${file.name}" 太大了。请选择小于 ${MAX_FILE_SIZE / (1024 * 1024)}MB 的文件。`;
-                          toast.error('文件过大', errorMsg);
-                          setUploadError(errorMsg);
-                          // Clear the file input
-                          if (fileInputRef.current) {
-                            fileInputRef.current.value = "";
-                          }
-                          setSelectedFile(null);
-                        } else {
-                          setSelectedFile(file);
-                          setUploadError(null); // Clear previous error
-                        }
-                      } else {
-                        setSelectedFile(null);
-                      }
-                    }}
+                    id="media-upload"
+                    ref={fileInputRef}
+                    onChange={(e) => handleFileSelect(e.target.files)}
                     disabled={isUploading}
                   />
-                  {!selectedFile ? (
-                    <>
-                      <div className="text-4xl mb-2">🖼️🎬</div>
-                      <p className="text-gray-600 mb-2">点击选择图片或视频</p>
-                      <label
-                        htmlFor="media-upload" // Changed htmlFor
-                        className={`btn-secondary cursor-pointer inline-block ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        选择文件
-                      </label>
-                    </>
-                  ) : (
-                    <div className="text-left">
-                      <p className="text-sm text-gray-700">已选择文件:</p>
-                      <p className="font-medium text-gray-900 truncate">{selectedFile.name}</p>
-                      <p className="text-xs text-gray-500">类型: {selectedFile.type}</p>
-                      <p className="text-xs text-gray-500">大小: {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
-                      <button
-                        onClick={() => setSelectedFile(null)}
-                        className="text-xs text-red-500 hover:text-red-700 mt-1"
-                        disabled={isUploading}
-                      >
-                        清除选择
-                      </button>
-                    </div>
-                  )}
+                  <div className="text-4xl mb-2">📁</div>
+                  <p className="text-gray-600 mb-1">拖拽文件到这里，或点击选择</p>
+                  <p className="text-xs text-gray-400">支持图片和视频，单个文件最大 200MB</p>
                 </div>
               </div>
 
+              {/* 日期设置 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  日期
+                  拍摄日期 <span className="text-gray-400 font-normal">(应用于所有文件)</span>
                 </label>
                 <input
                   type="date"
-                  value={newMediaItemData.date} // Updated state name
-                  onChange={(e) => setNewMediaItemData(prev => ({ ...prev, date: e.target.value }))} // Updated state name
+                  value={uploadDate}
+                  onChange={(e) => setUploadDate(e.target.value)}
                   className="input-field"
+                  disabled={isUploading}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  标题
-                </label>
-                <input
-                  type="text"
-                  value={newMediaItemData.title} // Updated state name
-                  onChange={(e) => setNewMediaItemData(prev => ({ ...prev, title: e.target.value }))} // Updated state name
-                  className="input-field"
-                  placeholder="例如：第一次笑"
-                />
-              </div>
+              {/* 文件列表 */}
+              {uploadFiles.length > 0 && (
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      已选择 {uploadFiles.length} 个文件
+                    </label>
+                    {!isUploading && (
+                      <button
+                        onClick={clearAllFiles}
+                        className="text-xs text-red-500 hover:text-red-700"
+                      >
+                        清空全部
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-2 max-h-72 overflow-y-auto border rounded-lg p-2 bg-gray-50">
+                    {uploadFiles.map((item) => (
+                      <div 
+                        key={item.id} 
+                        className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                          item.status === 'success' ? 'bg-green-50 border border-green-200' :
+                          item.status === 'error' ? 'bg-red-50 border border-red-200' :
+                          item.status === 'uploading' ? 'bg-blue-50 border border-blue-200' :
+                          'bg-white border border-gray-200'
+                        }`}
+                      >
+                        {/* 文件类型图标 */}
+                        <div className="text-2xl flex-shrink-0">
+                          {item.file.type.startsWith('image/') ? '🖼️' : '🎬'}
+                        </div>
+                        
+                        {/* 文件信息 */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{item.file.name}</p>
+                          <p className="text-xs text-gray-500">
+                            {(item.file.size / (1024 * 1024)).toFixed(2)} MB
+                            {item.file.type.startsWith('video/') && ' · 视频将自动生成封面'}
+                          </p>
+                          
+                          {/* 标题输入框 (可选) */}
+                          {item.status === 'pending' && (
+                            <input
+                              type="text"
+                              value={item.title}
+                              onChange={(e) => updateFileTitle(item.id, e.target.value)}
+                              placeholder="标题 (可选)"
+                              className="mt-2 w-full text-sm px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                              disabled={isUploading}
+                            />
+                          )}
+                          
+                          {/* 上传进度条 */}
+                          {item.status === 'uploading' && (
+                            <div className="mt-2">
+                              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-teal-400 to-teal-600 transition-all duration-300"
+                                  style={{ width: `${item.progress}%` }}
+                                />
+                              </div>
+                              <p className="text-xs text-teal-600 mt-1">
+                                {item.progress < 50 ? '上传中...' : item.progress < 90 ? '处理中...' : '即将完成...'} {item.progress}%
+                              </p>
+                            </div>
+                          )}
+                          
+                          {/* 成功状态 */}
+                          {item.status === 'success' && (
+                            <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                              <span>✓</span> 上传成功
+                            </p>
+                          )}
+                          
+                          {/* 错误状态 */}
+                          {item.status === 'error' && (
+                            <p className="text-xs text-red-600 mt-1">✗ {item.errorMessage}</p>
+                          )}
+                        </div>
+                        
+                        {/* 删除按钮 */}
+                        {item.status === 'pending' && !isUploading && (
+                          <button
+                            onClick={() => removeFile(item.id)}
+                            className="text-gray-400 hover:text-red-500 flex-shrink-0 p-1"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  描述
-                </label>
-                <textarea
-                  value={newMediaItemData.description || ''} // Updated state name, handle null
-                  onChange={(e) => setNewMediaItemData(prev => ({ ...prev, description: e.target.value }))} // Updated state name
-                  className="input-field"
-                  rows={3}
-                  placeholder="描述这个媒体文件的故事..."
-                />
+              {/* 上传按钮 */}
+              <div className="flex space-x-3 mt-6">
+                <button
+                  onClick={handleUpload}
+                  className="btn-primary flex-1"
+                  disabled={isUploading || uploadFiles.length === 0}
+                >
+                  {isUploading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                      </svg>
+                      上传中...
+                    </span>
+                  ) : (
+                    `上传 ${uploadFiles.length || ''} 个文件`
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    if (isUploading) return;
+                    setShowUploadForm(false);
+                    setUploadFiles([]);
+                    setUploadError(null);
+                  }}
+                  className={`btn-secondary flex-1 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={isUploading}
+                >
+                  取消
+                </button>
               </div>
-            </div>
-
-            <div className="flex space-x-3 mt-6">
-              <button
-                onClick={handleUploadMediaItem} // Renamed handler
-                className="btn-primary flex-1"
-                disabled={isUploading}
-              >
-                {isUploading ? '上传中...' : '上传文件'}
-              </button>
-              <button
-                onClick={() => {
-                  if (isUploading) return;
-                  setShowUploadForm(false);
-                  setUploadError(null);
-                  setSelectedFile(null);
-                }}
-                className={`btn-secondary flex-1 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={isUploading}
-              >
-                取消
-              </button>
             </div>
           </div>
         </div>
@@ -669,7 +744,9 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 {!isEditing ? (
-                  <h3 className="text-xl font-bold text-gray-800">{selectedMediaItem.title}</h3>
+                  <h3 className="text-xl font-bold text-gray-800">
+                    {selectedMediaItem.title || <span className="text-gray-400 italic">未命名</span>}
+                  </h3>
                 ) : (
                   <div className="flex-1 mr-4">
                     <input
@@ -914,7 +991,9 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
                   </div>
                   
                   <div className="mt-2">
-                    <p className="text-sm font-medium text-gray-800 truncate">{item.title}</p>
+                    <p className="text-sm font-medium text-gray-800 truncate">
+                      {item.title || <span className="text-gray-400 italic">未命名</span>}
+                    </p>
                     <div className="flex items-center justify-between text-xs text-gray-500">
                       <span>{item.date}</span>
                       <span>{item.age}</span>

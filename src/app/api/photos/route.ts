@@ -32,10 +32,7 @@ export async function POST(request: NextRequest) {
       console.error('Missing babyId')
       return NextResponse.json({ error: 'Baby ID is required' }, { status: 400 })
     }
-    if (!data.title) {
-      console.error('Missing title')
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
-    }
+    // title is now optional - will use empty string if not provided
     if (!data.url) {
       console.error('Missing url')
       return NextResponse.json({ error: 'URL is required' }, { status: 400 })
@@ -49,7 +46,7 @@ export async function POST(request: NextRequest) {
       data: {
         babyId: data.babyId,
         date: new Date(data.date),
-        title: data.title,
+        title: data.title || '', // title is optional, default to empty string
         description: data.description || null,
         url: data.url, // URL of the main media (image or video)
         mediaType: data.mediaType, // "IMAGE" or "VIDEO"

@@ -109,7 +109,7 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
           <p className="text-gray-600">加载中...</p>
         </div>
       </div>
@@ -139,7 +139,7 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 lg:gap-6">
           {/* 宝宝信息卡片 - 占据更多空间 */}
           <div className="col-span-2 md:col-span-3 lg:col-span-2">
-            <div className="card p-4 h-full bg-gradient-to-br from-pink-50 to-purple-50 min-h-[60px] md:min-h-[80px] lg:min-h-[100px]">
+            <div className="card p-4 h-full bg-gradient-to-br from-teal-50 to-cyan-50 min-h-[60px] md:min-h-[80px] lg:min-h-[100px]">
               <div className="flex items-center space-x-4 h-full">
                 <div className="w-20 h-20 flex-shrink-0">
                   {baby.avatar ? (
@@ -151,7 +151,7 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
                       className="w-20 h-20 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-20 h-20 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center text-white text-3xl">
+                    <div className="w-20 h-20 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white text-3xl">
                       {baby.gender === 'boy' ? '👦' : '👧'}
                     </div>
                   )}
@@ -159,7 +159,7 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
                 <div className="flex-1 min-w-0">
                   <h1 className="text-xl font-bold text-gray-800 truncate mb-1">{baby.name}</h1>
                   <p className="text-gray-600 text-base mb-1">{currentAge}</p>
-                  <p className="text-sm text-purple-600 font-medium mb-2">
+                  <p className="text-sm text-teal-600 font-medium mb-2">
                     已经 {currentDays} 天了 ✨
                   </p>
                   {/* <p className="text-sm text-gray-500 truncate mb-2">
@@ -167,7 +167,7 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
                   </p> */}
                   <button 
                     onClick={() => setActiveTab('baby')}
-                    className="text-sm text-purple-600 hover:text-purple-800 font-medium"
+                    className="text-sm text-teal-600 hover:text-teal-800 font-medium"
                   >
                     编辑信息 →
                   </button>
@@ -211,9 +211,9 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
           </div>
 
           {/* 记录数卡片 */}
-          <div className="card p-4 bg-gradient-to-br from-purple-50 to-purple-100 min-h-[60px] md:min-h-[80px] lg:min-h-[100px]">
+          <div className="card p-4 bg-gradient-to-br from-slate-50 to-slate-100 min-h-[60px] md:min-h-[80px] lg:min-h-[100px]">
             <div className="flex flex-col items-center text-center h-full justify-center">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center text-white text-xl mb-3">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-teal-500 to-teal-600 flex items-center justify-center text-white text-xl mb-3">
                 🏆
               </div>
               <h3 className="text-sm font-medium text-gray-600 mb-2">记录数</h3>
