@@ -52,61 +52,35 @@
 
 - Node.js 18.0.0 或更高版本
 - npm 或 yarn 包管理器
-- PostgreSQL 数据库（推荐使用 Neon）
+- PostgreSQL 数据库（推荐使用 [Neon](https://neon.tech)）
 - Cloudflare R2 账号（用于文件存储）
+- FFmpeg（可选，用于视频封面生成）
 
 ## 🚀 快速开始
 
-### 1. 克隆项目
 ```bash
+# 1. 克隆项目
 git clone https://github.com/zhajiahe/my-baby.git
 cd my-baby
-```
 
-### 2. 安装依赖
-```bash
+# 2. 安装依赖
 npm install
-```
 
-### 3. 环境配置
-复制环境变量模板并配置：
-```bash
+# 3. 配置环境变量
 cp env.example .env
-```
+# 编辑 .env 文件，填入数据库和 R2 配置
 
-编辑 `.env` 文件，配置以下环境变量：
-```env
-# 数据库连接
-DATABASE_URL="your_neon_database_url"
-
-# Cloudflare R2 配置
-R2_TOKEN="your_r2_token"
-R2_ACCESS_KEY_ID="your_access_key_id"
-R2_SECRET_ACCESS_KEY="your_secret_access_key"
-R2_ENDPOINT="your_r2_endpoint"
-R2_PUBLIC_DOMAIN="your_public_domain"
-R2_ACCOUNT_ID="your_account_id"
-R2_BUCKET_NAME="your_bucket_name"
-```
-
-### 4. 数据库设置
-```bash
-# 生成 Prisma 客户端
+# 4. 初始化数据库
 npm run db:generate
-
-# 推送数据库结构
 npm run db:push
 
-# （可选）填充初始数据
-npm run db:seed
-```
-
-### 5. 启动开发服务器
-```bash
+# 5. 启动开发服务器
 npm run dev
 ```
 
 访问 [http://localhost:3000](http://localhost:3000) 查看应用。
+
+📖 **详细开发和部署指南请参考 [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)**
 
 ## 📝 可用脚本
 
@@ -265,12 +239,18 @@ R2_TOKEN="your_api_token_here"
 ## 🚀 部署
 
 ### Vercel 部署（推荐）
+
+Vercel 是 Next.js 官方托管平台，提供最佳部署体验：
+
 1. 将代码推送到 GitHub
-2. 在 Vercel 中导入项目
+2. 在 [Vercel](https://vercel.com) 中导入项目
 3. 配置环境变量
-4. 部署完成
+4. 自动部署完成
+
+📖 **详细部署步骤请参考 [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md#vercel-部署)**
 
 ### 本地部署
+
 ```bash
 npm run build
 npm run start
