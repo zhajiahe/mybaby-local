@@ -762,7 +762,7 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
               <div className="flex justify-between items-center mb-4">
                 {!isEditing ? (
                   <h3 className="text-xl font-bold text-gray-800">
-                    {selectedMediaItem.title || <span className="text-gray-400 italic">未命名</span>}
+                    {selectedMediaItem.title || <span className="text-gray-400 italic"> </span>}
                   </h3>
                 ) : (
                   <div className="flex-1 mr-4">
@@ -1015,7 +1015,7 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
                   
                   <div className="mt-2">
                     <p className="text-sm font-medium text-gray-800 truncate">
-                      {item.title || <span className="text-gray-400 italic">未命名</span>}
+                      {item.title || <span className="text-gray-400 italic"> </span>}
                     </p>
                     <div className="flex items-center justify-between text-xs text-gray-500">
                       <span>{item.date}</span>
