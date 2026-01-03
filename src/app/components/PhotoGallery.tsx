@@ -309,6 +309,36 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
     setUploadFiles([]);
   };
 
+  // 辅助函数：清理文件名，确保只包含安全字符
+  const sanitizeFileName = (name: string): string => {
+    // 保留扩展名
+    const ext = name.split('.').pop()?.toLowerCase() || '';
+    const baseName = name.substring(0, name.lastIndexOf('.') || name.length);
+    // 只保留字母、数字、下划线和连字符
+    const safeName = baseName.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 50);
+    return ext ? `${safeName}.${ext}` : safeName;
+  };
+
+  // 辅助函数：创建干净的文件对象（解决 iOS Safari 兼容性问题）
+  const createCleanFile = async (file: File): Promise<File> => {
+    try {
+      // 读取文件为 ArrayBuffer
+      const arrayBuffer = await file.arrayBuffer();
+      // 创建新的 Blob
+      const blob = new Blob([arrayBuffer], { type: file.type || 'application/octet-stream' });
+      // 使用安全的文件名创建新的 File 对象
+      const safeName = sanitizeFileName(file.name);
+      return new File([blob], safeName, { 
+        type: file.type || 'application/octet-stream',
+        lastModified: file.lastModified || Date.now()
+      });
+    } catch (error) {
+      console.error('Error creating clean file:', error);
+      // 如果处理失败，返回原始文件
+      return file;
+    }
+  };
+
   // 上传处理 - 使用后端处理视频封面
   const handleUpload = async () => {
     if (!baby?.id) {
@@ -333,9 +363,12 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
       ));
 
       try {
+        // 创建干净的文件对象（解决 iOS Safari 兼容性问题）
+        const cleanFile = await createCleanFile(item.file);
+        
         // 使用后端上传 API 处理文件（包括视频封面生成）
         const formData = new FormData();
-        formData.append('file', item.file);
+        formData.append('file', cleanFile);
 
         // 更新进度到 20%
         setUploadFiles(prev => prev.map(f => 
@@ -348,11 +381,30 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
         });
 
         if (!uploadResponse.ok) {
-          const errorData = await uploadResponse.json();
-          throw new Error(errorData.error || '上传文件失败');
+          let errorMessage = '上传文件失败';
+          try {
+            const errorData = await uploadResponse.json();
+            errorMessage = errorData.error || errorData.message || errorMessage;
+          } catch {
+            // 如果响应不是有效的 JSON，尝试读取文本
+            try {
+              const errorText = await uploadResponse.text();
+              if (errorText) {
+                errorMessage = errorText.substring(0, 100); // 限制错误消息长度
+              }
+            } catch {
+              errorMessage = `上传失败 (HTTP ${uploadResponse.status})`;
+            }
+          }
+          throw new Error(errorMessage);
         }
 
-        const uploadResult = await uploadResponse.json();
+        let uploadResult;
+        try {
+          uploadResult = await uploadResponse.json();
+        } catch {
+          throw new Error('服务器响应格式错误');
+        }
 
         // 更新进度到 70%
         setUploadFiles(prev => prev.map(f => 
@@ -378,11 +430,22 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
         });
 
         if (!saveResponse.ok) {
-          const errorData = await saveResponse.json();
-          throw new Error(errorData.error || '保存媒体信息失败');
+          let errorMessage = '保存媒体信息失败';
+          try {
+            const errorData = await saveResponse.json();
+            errorMessage = errorData.error || errorData.message || errorMessage;
+          } catch {
+            errorMessage = `保存失败 (HTTP ${saveResponse.status})`;
+          }
+          throw new Error(errorMessage);
         }
 
-        const savedItem = await saveResponse.json();
+        let savedItem;
+        try {
+          savedItem = await saveResponse.json();
+        } catch {
+          throw new Error('保存响应格式错误');
+        }
         successfulItems.push({
           ...savedItem,
           age: calculateAge(savedItem.date),
@@ -395,7 +458,24 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
 
       } catch (error) {
         console.error(`Failed to upload ${item.file.name}:`, error);
-        const errorMessage = error instanceof Error ? error.message : '上传失败';
+        
+        // 更详细的错误信息处理
+        let errorMessage = '上传失败';
+        if (error instanceof Error) {
+          // 特殊处理一些常见的浏览器错误
+          if (error.message.includes('pattern') || error.message.includes('Pattern')) {
+            errorMessage = '文件格式验证失败，请尝试重新选择文件';
+          } else if (error.message.includes('network') || error.message.includes('Network')) {
+            errorMessage = '网络连接失败，请检查网络后重试';
+          } else if (error.message.includes('timeout') || error.message.includes('Timeout')) {
+            errorMessage = '上传超时，请稍后重试';
+          } else {
+            errorMessage = error.message;
+          }
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        }
+        
         setUploadFiles(prev => prev.map(f => 
           f.id === item.id ? { ...f, status: 'error' as const, errorMessage } : f
         ));

@@ -7,47 +7,14 @@ import BabyInfo from './components/BabyInfo'
 import GrowthRecord from './components/GrowthRecord'
 import Milestones from './components/Milestones'
 import PhotoGallery from './components/PhotoGallery'
-import { ChristmasTree } from '@/components/ui/ChristmasTree'
 import { useBaby } from '@/hooks/useBaby'
 import { useDashboardPreloader, useSmartPreloader } from '@/hooks/useDataPreloader'
-
-// 检查是否是圣诞节期间 (11月30日 - 12月31日)
-function isChristmasSeason(): boolean {
-  const now = new Date()
-  const month = now.getMonth() // 0-11
-  const day = now.getDate()
-  // 11月30日 (month=10, day=30) 或 12月任意一天 (month=11)
-  return (month === 10 && day >= 30) || month === 11
-}
-
-// 检查今天是否已经显示过圣诞树
-function hasShownToday(): boolean {
-  if (typeof window === 'undefined') return true
-  const lastShown = localStorage.getItem('christmas-tree-shown')
-  if (!lastShown) return false
-  const today = new Date().toDateString()
-  return lastShown === today
-}
-
-// 标记今天已显示
-function markShownToday(): void {
-  if (typeof window === 'undefined') return
-  localStorage.setItem('christmas-tree-shown', new Date().toDateString())
-}
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set(['dashboard']))
-  const [showChristmas, setShowChristmas] = useState(false)
   const { baby } = useBaby()
   const growthPreloadedRef = useRef(false)
-
-  // 圣诞节彩蛋
-  useEffect(() => {
-    if (isChristmasSeason() && !hasShownToday()) {
-      setShowChristmas(true)
-    }
-  }, [])
 
   // 启用Dashboard预加载
   useDashboardPreloader()
@@ -89,16 +56,8 @@ export default function Home() {
     }
   }
 
-  const handleCloseChristmas = () => {
-    markShownToday()
-    setShowChristmas(false)
-  }
-
   return (
     <div className="min-h-screen">
-      {/* 圣诞节彩蛋 */}
-      {showChristmas && <ChristmasTree onClose={handleCloseChristmas} />}
-      
       <Navigation activeTab={activeTab} setActiveTab={handleTabChange} />
       <main className="main-content container mx-auto px-3 md:px-4 py-4 md:py-8">
         {/* 使用CSS控制显示隐藏，避免组件重新挂载 */}
