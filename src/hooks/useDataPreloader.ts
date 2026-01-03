@@ -55,7 +55,6 @@ export function useDataPreloader(options: PreloadOptions = {}) {
     if (preloadPromises.length > 0) {
       try {
         await Promise.allSettled(preloadPromises)
-        console.log('Data preloading completed')
       } catch (error) {
         console.warn('Some data preloading failed:', error)
       }
@@ -118,7 +117,6 @@ export function useSmartPreloader(activeTab: string, loadedTabs: Set<string>) {
     if (activeTab === 'growth' && !loadedTabs.has('milestones')) {
       setTimeout(() => {
         // 触发milestones预加载的逻辑
-        console.log('Smart preloading: milestones')
         // 可以在这里调用milestones的预加载
       }, 2000)
     }
@@ -126,7 +124,6 @@ export function useSmartPreloader(activeTab: string, loadedTabs: Set<string>) {
     // 当用户访问milestones时，预加载photos
     if (activeTab === 'milestones' && !loadedTabs.has('photos')) {
       setTimeout(() => {
-        console.log('Smart preloading: photos')
         // 可以在这里调用photos的预加载
       }, 2000)
     }

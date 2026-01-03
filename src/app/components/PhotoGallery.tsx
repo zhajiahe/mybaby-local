@@ -46,9 +46,6 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
   const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
   
   // Debug logging
-  console.log('PhotoGallery - baby:', baby)
-  console.log('PhotoGallery - loading:', loading)
-  console.log('PhotoGallery - error:', error)
   
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]) // Renamed from photos, updated type
 
@@ -335,7 +332,6 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
     try {
       const arrayBuffer = await file.arrayBuffer();
       const blob = new Blob([arrayBuffer], { type: 'image/jpeg' });
-      console.log('HEIC file detected, attempting to process as JPEG');
       return { blob, type: 'image/jpeg' };
     } catch (error) {
       console.warn('HEIC conversion failed, uploading as-is:', error);
@@ -1090,7 +1086,6 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
                           e.currentTarget.nextElementSibling?.classList.remove('hidden');
                         }}
                         onLoad={() => {
-                          console.log('Image loaded successfully:', item.url);
                         }}
                       />
                     ) : item.mediaType === 'VIDEO' ? (

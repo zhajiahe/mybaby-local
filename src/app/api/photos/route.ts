@@ -48,7 +48,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
-    console.log('Received data for media item creation:', data)
     
     // Validate required fields
     if (!data.babyId) {
@@ -79,7 +78,6 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    console.log('Successfully created media item:', mediaItem)
     return NextResponse.json(mediaItem, { status: 201 }) // Changed from photo
   } catch (error) {
     console.error('Error creating media item:', error) // Changed from photo

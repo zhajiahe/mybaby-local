@@ -69,7 +69,6 @@ export async function POST(request: NextRequest) {
       )
     )
 
-    console.log(`Successfully created ${createdItems.length} media items in batch`)
     
     return NextResponse.json(
       {
