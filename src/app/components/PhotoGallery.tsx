@@ -6,6 +6,8 @@ import { Camera, Calendar, Clock, Upload, X, Trash2, Image as ImageIcon, Film } 
 import { useBaby } from '@/hooks/useBaby'
 import { useToastContext } from '@/components/providers/ToastProvider'
 import { EmptyPhotos } from '@/components/ui/illustrations'
+// heic2any 需要动态导入，因为它使用了 window 对象
+// import heic2any from 'heic2any'
 
 interface MediaItem { // Renamed from Photo
   id: string;
@@ -316,7 +318,7 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
     return ext ? `${safeName}.${ext}` : safeName;
   };
 
-  // 辅助函数：HEIC/HEIF 转换为 JPEG（客户端处理）
+  // 辅助函数：HEIC/HEIF 转换为 JPEG（使用 heic2any 库，动态导入）
   const convertHeicToJpeg = async (file: File): Promise<{ blob: Blob; type: string }> => {
     // 检查是否是 HEIC/HEIF
     const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || 
@@ -327,17 +329,108 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
       return { blob: new Blob([arrayBuffer], { type: file.type }), type: file.type };
     }
     
-    // 使用 Canvas 转换（仅适用于浏览器已支持 HEIC 的情况）
-    // 对于不支持的浏览器，尝试原样上传
+    // 使用 heic2any 库转换 HEIC 到 JPEG（动态导入避免 SSR 问题）
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const blob = new Blob([arrayBuffer], { type: 'image/jpeg' });
-      return { blob, type: 'image/jpeg' };
+      const heic2any = (await import('heic2any')).default;
+      const convertedBlob = await heic2any({
+        blob: file,
+        toType: 'image/jpeg',
+        quality: 0.85,
+      });
+      
+      // heic2any 可能返回数组（多帧 HEIC），取第一个
+      const resultBlob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+      return { blob: resultBlob, type: 'image/jpeg' };
     } catch (error) {
-      console.warn('HEIC conversion failed, uploading as-is:', error);
+      console.warn('HEIC conversion failed, attempting fallback:', error);
+      // 降级：直接使用原始文件（某些浏览器可能原生支持）
       const arrayBuffer = await file.arrayBuffer();
       return { blob: new Blob([arrayBuffer], { type: file.type }), type: file.type };
     }
+  };
+
+  // 辅助函数：生成视频缩略图（使用 Video + Canvas）
+  const generateVideoThumbnail = async (file: File): Promise<Blob | null> => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.muted = true;
+      video.playsInline = true;
+      
+      // 超时处理
+      const timeout = setTimeout(() => {
+        URL.revokeObjectURL(video.src);
+        resolve(null);
+      }, 10000);
+      
+      video.onloadeddata = () => {
+        // 跳转到第 1 秒或视频中间
+        video.currentTime = Math.min(1, video.duration / 2);
+      };
+      
+      video.onseeked = () => {
+        clearTimeout(timeout);
+        try {
+          const canvas = document.createElement('canvas');
+          const width = 320;
+          const height = Math.round((video.videoHeight / video.videoWidth) * width) || 180;
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(video, 0, 0, width, height);
+            canvas.toBlob((blob) => {
+              URL.revokeObjectURL(video.src);
+              resolve(blob);
+            }, 'image/jpeg', 0.8);
+          } else {
+            URL.revokeObjectURL(video.src);
+            resolve(null);
+          }
+        } catch (err) {
+          console.error('Failed to generate video thumbnail:', err);
+          URL.revokeObjectURL(video.src);
+          resolve(null);
+        }
+      };
+      
+      video.onerror = () => {
+        clearTimeout(timeout);
+        URL.revokeObjectURL(video.src);
+        resolve(null);
+      };
+      
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
+  // 辅助函数：获取视频时长
+  const getVideoDuration = async (file: File): Promise<number | null> => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      
+      const timeout = setTimeout(() => {
+        URL.revokeObjectURL(video.src);
+        resolve(null);
+      }, 5000);
+      
+      video.onloadedmetadata = () => {
+        clearTimeout(timeout);
+        const duration = Math.round(video.duration);
+        URL.revokeObjectURL(video.src);
+        resolve(duration);
+      };
+      
+      video.onerror = () => {
+        clearTimeout(timeout);
+        URL.revokeObjectURL(video.src);
+        resolve(null);
+      };
+      
+      video.src = URL.createObjectURL(file);
+    });
   };
 
   // 辅助函数：直接上传到 R2（绕过服务器，解决文件大小限制）
@@ -349,6 +442,7 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
     mediaType: 'IMAGE' | 'VIDEO';
     format: string;
     thumbnailUrl: string | null;
+    duration: number | null;
   }> => {
     const isVideo = file.type.startsWith('video/');
     
@@ -391,16 +485,43 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
       throw new Error(`上传失败 (HTTP ${uploadResponse.status})`);
     }
     
-    onProgress(80);
+    onProgress(70);
     
-    // 视频暂不生成缩略图（需要客户端处理或异步处理）
-    // TODO: 可以使用 video 元素截取第一帧作为缩略图
+    // 视频缩略图和时长处理
+    let thumbnailUrl: string | null = null;
+    let duration: number | null = null;
+    
+    if (isVideo) {
+      // 生成视频缩略图
+      const thumbnailBlob = await generateVideoThumbnail(file);
+      if (thumbnailBlob && urlData.thumbnailUploadUrl) {
+        try {
+          const thumbResponse = await fetch(urlData.thumbnailUploadUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'image/jpeg' },
+            body: thumbnailBlob,
+          });
+          if (thumbResponse.ok) {
+            thumbnailUrl = urlData.thumbnailPublicUrl;
+          }
+        } catch (err) {
+          console.warn('Failed to upload video thumbnail:', err);
+        }
+      }
+      
+      // 获取视频时长
+      duration = await getVideoDuration(file);
+      onProgress(90);
+    } else {
+      onProgress(90);
+    }
     
     return {
       url: urlData.publicUrl,
       mediaType: urlData.mediaType,
       format: urlData.format,
-      thumbnailUrl: urlData.thumbnailPublicUrl || null,
+      thumbnailUrl,
+      duration,
     };
   };
 
@@ -449,7 +570,7 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
           mediaType: uploadResult.mediaType,
           format: uploadResult.format,
           thumbnailUrl: uploadResult.thumbnailUrl || null,
-          duration: null, // 视频时长暂不处理
+          duration: uploadResult.duration || null,
         };
 
         const saveResponse = await fetch('/api/photos', {
