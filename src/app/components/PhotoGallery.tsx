@@ -120,7 +120,9 @@ export default function PhotoGallery() { // Consider renaming to MediaGallery la
         
         if (response.ok) {
           const data = await response.json()
-          const itemsWithAge = data.map((item: MediaItem) => ({
+          // 兼容新的分页 API 格式和旧的数组格式
+          const items = Array.isArray(data) ? data : (data.items || [])
+          const itemsWithAge = items.map((item: MediaItem) => ({
             ...item,
             age: calculateAge(item.date)
           }))
