@@ -6,9 +6,16 @@ const MINIO_ENDPOINT = process.env.MINIO_ENDPOINT || 'http://localhost:9500'
 const MINIO_ACCESS_KEY = process.env.MINIO_ACCESS_KEY || 'minioadmin'
 const MINIO_SECRET_KEY = process.env.MINIO_SECRET_KEY || 'minioadmin'
 const MINIO_BUCKET_NAME = process.env.MINIO_BUCKET_NAME || 'my-baby'
-const MINIO_PUBLIC_URL = process.env.MINIO_PUBLIC_URL || 'http://localhost:9500/my-baby'
+// Use proxy URL for public access (internal network mode)
+// When MINIO_PUBLIC_URL is not set or equals localhost, use the proxy API
+const MINIO_PUBLIC_URL_ENV = process.env.MINIO_PUBLIC_URL || ''
+const MINIO_PUBLIC_URL = MINIO_PUBLIC_URL_ENV.includes('localhost') || !MINIO_PUBLIC_URL_ENV 
+  ? '/api/media'  // Use proxy for internal network access
+  : MINIO_PUBLIC_URL_ENV
+// External endpoint for presigned URLs (accessible from browser)
+const MINIO_EXTERNAL_ENDPOINT = process.env.MINIO_EXTERNAL_ENDPOINT || 'http://localhost:9500'
 
-// Initialize S3-compatible client for MinIO
+// Initialize S3-compatible client for MinIO (internal operations)
 const s3Client = new S3Client({
   region: 'us-east-1', // Required but not used by MinIO
   endpoint: MINIO_ENDPOINT,
@@ -17,6 +24,17 @@ const s3Client = new S3Client({
     secretAccessKey: MINIO_SECRET_KEY,
   },
   forcePathStyle: true, // Required for MinIO
+})
+
+// Initialize S3 client for presigned URLs (external/browser accessible)
+const s3ClientExternal = new S3Client({
+  region: 'us-east-1',
+  endpoint: MINIO_EXTERNAL_ENDPOINT,
+  credentials: {
+    accessKeyId: MINIO_ACCESS_KEY,
+    secretAccessKey: MINIO_SECRET_KEY,
+  },
+  forcePathStyle: true,
 })
 
 export interface UploadResult {
@@ -63,6 +81,7 @@ export async function deleteFile(key: string): Promise<void> {
 
 /**
  * Generate a presigned URL for direct upload
+ * Uses external endpoint so the URL is accessible from the browser
  */
 export async function getPresignedUploadUrl(
   key: string,
@@ -75,7 +94,8 @@ export async function getPresignedUploadUrl(
     ContentType: contentType,
   })
 
-  const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn })
+  // Use external client so the presigned URL is accessible from browser
+  const uploadUrl = await getSignedUrl(s3ClientExternal, command, { expiresIn })
   const publicUrl = `${MINIO_PUBLIC_URL.replace(/\/$/, '')}/${key}`
 
   return { uploadUrl, publicUrl }

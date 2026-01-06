@@ -41,18 +41,16 @@ const STORAGE_KEY = 'currentBabyId'
 
 export function BabyProvider({ children }: { children: ReactNode }) {
   const [babies, setBabies] = useState<Baby[]>([])
-  const [currentBabyId, setCurrentBabyId] = useState<string | null>(null)
+  // 从 localStorage 初始化，避免竞态条件
+  const [currentBabyId, setCurrentBabyId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(STORAGE_KEY)
+    }
+    return null
+  })
   const [currentBaby, setCurrentBaby] = useState<Baby | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  // Load saved baby ID from localStorage
-  useEffect(() => {
-    const savedId = localStorage.getItem(STORAGE_KEY)
-    if (savedId) {
-      setCurrentBabyId(savedId)
-    }
-  }, [])
 
   // Fetch all babies
   const refreshBabies = useCallback(async () => {

@@ -4,23 +4,13 @@
 
 ## 功能
 
-- 宝宝信息管理（姓名、出生日期、性别等）
+- 多宝宝管理与切换
 - 成长记录追踪（身高、体重、头围）
-- 里程碑记录
-- 媒体相册（照片/视频上传，支持 HEIC 格式）
+- 随心记（里程碑、日记）
+- 媒体相册（照片/视频，支持 HEIC）
 - 成长曲线图表
 
-## 技术栈
-
-- **框架**: Next.js 16 + React 19 + TypeScript
-- **样式**: Tailwind CSS
-- **数据库**: SQLite + Prisma
-- **存储**: MinIO（S3 兼容）
-- **包管理**: pnpm
-
-## 快速开始
-
-### Docker 一键部署（推荐）
+## 一键部署
 
 ```bash
 # 克隆项目
@@ -31,71 +21,76 @@ cd my-baby
 docker compose up -d
 ```
 
-访问地址：
-- 应用: http://localhost:3000
-- MinIO Console: http://localhost:9501（账号: minioadmin / minioadmin）
+访问 http://localhost:3000 开始使用。
 
-### 本地开发
+## 自定义配置
+
+### 远程访问配置
+
+默认配置适用于本地访问。如需远程访问，修改 `docker-compose.yml`：
+
+```yaml
+app:
+  environment:
+    # 改为服务器 IP 或域名
+    - MINIO_EXTERNAL_ENDPOINT=http://你的服务器IP:9500
+    - MINIO_PUBLIC_URL=http://你的服务器IP:9500/my-baby
+```
+
+### 内网模式（推荐）
+
+当前版本默认启用内网模式：
+- 媒体文件通过应用代理访问（`/api/media/`）
+- MinIO 无需对外暴露，更安全
+- 无需配置外部地址
+
+### 端口配置
+
+| 服务 | 默认端口 | 说明 |
+|------|---------|------|
+| 应用 | 3000 | 主应用 |
+| MinIO API | 9500 | 存储 API |
+| MinIO Console | 9501 | 存储管理界面 |
+
+修改端口：编辑 `docker-compose.yml` 中的 `ports` 配置。
+
+### 数据持久化
+
+数据存储在 Docker volumes 中：
+- `sqlite-data`: 数据库
+- `minio-data`: 媒体文件
+
+备份数据：
+```bash
+docker compose cp app:/app/data ./backup-data
+docker compose cp minio:/data ./backup-minio
+```
+
+## 本地开发
 
 ```bash
 # 安装依赖
 pnpm install
 
-# 启动 MinIO（需要先启动对象存储）
-docker compose up -d minio
+# 启动 MinIO
+docker compose up -d minio minio-init
 
-# 配置环境变量
+# 配置环境
 cp env.example .env
 
 # 初始化数据库
-pnpm run db:generate
 pnpm run db:push
 
-# 启动开发服务器
+# 启动开发
 pnpm run dev
 ```
 
-## 可用命令
+## 技术栈
 
-```bash
-pnpm run dev          # 启动开发服务器
-pnpm run build        # 构建生产版本
-pnpm run start        # 启动生产服务器
-pnpm run db:generate  # 生成 Prisma 客户端
-pnpm run db:push      # 同步数据库结构
-pnpm run db:studio    # 打开数据库管理界面
-pnpm run db:seed      # 填充初始数据
-```
-
-## 项目结构
-
-```
-├── docker-compose.yml    # Docker 编排
-├── Dockerfile            # 应用镜像
-├── prisma/               # 数据库模型
-├── src/
-│   ├── app/
-│   │   ├── api/          # API 路由
-│   │   └── components/   # 页面组件
-│   ├── hooks/            # React Hooks
-│   ├── lib/              # 工具函数
-│   └── types/            # 类型定义
-└── data/                 # SQLite 数据库文件
-```
-
-## 环境变量
-
-```env
-# 数据库
-DATABASE_URL="file:./data/baby.db"
-
-# MinIO 存储
-MINIO_ENDPOINT="http://localhost:9500"
-MINIO_ACCESS_KEY="minioadmin"
-MINIO_SECRET_KEY="minioadmin"
-MINIO_BUCKET_NAME="my-baby"
-MINIO_PUBLIC_URL="http://localhost:9500/my-baby"
-```
+- Next.js 16 + React 19 + TypeScript
+- Tailwind CSS
+- SQLite + Prisma
+- MinIO（S3 兼容存储）
 
 ## License
 

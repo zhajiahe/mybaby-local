@@ -13,6 +13,7 @@ import { useDashboardPreloader, useSmartPreloader } from '@/hooks/useDataPreload
 export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set(['dashboard']))
+  const [isCreatingBaby, setIsCreatingBaby] = useState(false)
   const { currentBaby, currentBabyId } = useBabyContext()
   const growthPreloadedRef = useRef(false)
 
@@ -43,6 +44,11 @@ export default function Home() {
     setActiveTab(tab)
     setLoadedTabs(prev => new Set([...prev, tab]))
     
+    // 切换到其他标签页时，重置创建宝宝状态
+    if (tab !== 'baby') {
+      setIsCreatingBaby(false)
+    }
+    
     if (tab === 'growth') {
       setTimeout(() => setLoadedTabs(prev => new Set([...prev, 'milestones'])), 1500)
     } else if (tab === 'milestones') {
@@ -50,10 +56,16 @@ export default function Home() {
     }
   }, [])
 
-  // 添加新宝宝：切换到宝宝信息页
+  // 添加新宝宝：切换到宝宝信息页并进入创建模式
   const handleAddBaby = useCallback(() => {
+    setIsCreatingBaby(true)
     handleTabChange('baby')
   }, [handleTabChange])
+
+  // 创建宝宝完成后的回调
+  const handleBabyCreated = useCallback(() => {
+    setIsCreatingBaby(false)
+  }, [])
 
   // 当切换宝宝时，重置预加载状态
   useEffect(() => {
@@ -73,7 +85,13 @@ export default function Home() {
         </div>
         
         <div className={activeTab === 'baby' ? 'block' : 'hidden'}>
-          {loadedTabs.has('baby') && <BabyInfo />}
+          {loadedTabs.has('baby') && (
+            <BabyInfo 
+              isCreating={isCreatingBaby} 
+              onCreated={handleBabyCreated}
+              onCancel={handleBabyCreated}
+            />
+          )}
         </div>
         
         <div className={activeTab === 'growth' ? 'block' : 'hidden'}>

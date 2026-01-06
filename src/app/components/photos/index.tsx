@@ -143,32 +143,25 @@ export default function PhotoGallery() {
       ))
 
       try {
-        // Get presigned URL
-        const urlResponse = await fetch('/api/photos/generate-upload-url', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            filename: item.file.name.replace(/[^a-zA-Z0-9._-]/g, '_').substring(0, 50),
-            contentType: item.file.type,
-            isVideo: item.file.type.startsWith('video/'),
-          }),
-        })
-
-        if (!urlResponse.ok) throw new Error('获取上传链接失败')
-        const urlData = await urlResponse.json()
+        // Upload via server proxy
+        const formData = new FormData()
+        formData.append('file', item.file)
 
         setUploadFiles(prev => prev.map(f =>
           f.id === item.id ? { ...f, progress: 20 } : f
         ))
 
-        // Upload to storage
-        const uploadResponse = await fetch(urlData.uploadUrl, {
-          method: 'PUT',
-          headers: { 'Content-Type': urlData.contentType },
-          body: item.file,
+        const uploadResponse = await fetch('/api/photos/upload', {
+          method: 'POST',
+          body: formData,
         })
 
-        if (!uploadResponse.ok) throw new Error('上传失败')
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json().catch(() => ({}))
+          throw new Error(errorData.error || errorData.details || '上传失败')
+        }
+
+        const uploadResult = await uploadResponse.json()
 
         setUploadFiles(prev => prev.map(f =>
           f.id === item.id ? { ...f, progress: 70 } : f
@@ -182,9 +175,11 @@ export default function PhotoGallery() {
             babyId: baby.id,
             date: uploadDate,
             title: item.title || '',
-            url: urlData.publicUrl,
-            mediaType: urlData.mediaType,
-            format: urlData.format,
+            url: uploadResult.url,
+            mediaType: uploadResult.mediaType,
+            format: uploadResult.format,
+            thumbnailUrl: uploadResult.thumbnailUrl || null,
+            duration: uploadResult.duration || null,
           }),
         })
 

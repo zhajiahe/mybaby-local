@@ -6,7 +6,27 @@ import { useToastContext } from '@/components/providers/ToastProvider'
 import Image from 'next/image'
 import { Baby, X } from 'lucide-react'
 
-export default function BabyInfo() {
+interface BabyInfoProps {
+  isCreating?: boolean
+  onCreated?: () => void
+  onCancel?: () => void
+}
+
+const emptyBabyInfo = {
+  name: '',
+  gender: 'boy',
+  birthDate: '',
+  birthTime: '',
+  avatar: '',
+  birthWeight: '',
+  birthHeight: '',
+  birthHeadCircumference: '',
+  bloodType: '',
+  allergies: '',
+  notes: ''
+}
+
+export default function BabyInfo({ isCreating = false, onCreated, onCancel }: BabyInfoProps) {
   const { currentBaby: baby, loading, error, createBaby, updateBaby } = useBabyContext()
   const toast = useToastContext()
   const [isEditing, setIsEditing] = useState(false)
@@ -15,21 +35,20 @@ export default function BabyInfo() {
   const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null)
   const [isAvatarOperation, setIsAvatarOperation] = useState(false)
   
-  const [babyInfo, setBabyInfo] = useState({
-    name: '',
-    gender: 'boy',
-    birthDate: '',
-    birthTime: '',
-    avatar: '',
-    birthWeight: '',
-    birthHeight: '',
-    birthHeadCircumference: '',
-    bloodType: '',
-    allergies: '',
-    notes: ''
-  })
+  const [babyInfo, setBabyInfo] = useState(emptyBabyInfo)
 
+  // 处理创建模式：清空表单并进入编辑状态
   useEffect(() => {
+    if (isCreating) {
+      setBabyInfo(emptyBabyInfo)
+      setIsEditing(true)
+    }
+  }, [isCreating])
+
+  // 加载现有宝宝数据（非创建模式时）
+  useEffect(() => {
+    if (isCreating) return // 创建模式下不加载现有数据
+    
     if (baby) {
       setBabyInfo({
         name: baby.name || '',
@@ -50,7 +69,7 @@ export default function BabyInfo() {
     } else if (!loading && !baby && !isAvatarOperation) {
       setIsEditing(true)
     }
-  }, [baby, loading, isAvatarOperation])
+  }, [baby, loading, isAvatarOperation, isCreating])
 
   const handleAvatarUpload = async () => {
     if (!selectedAvatarFile || !baby?.id) return
@@ -93,7 +112,17 @@ export default function BabyInfo() {
 
   const handleSave = async () => {
     try {
-      if (baby) {
+      // 创建模式或没有现有宝宝时，创建新宝宝
+      if (isCreating || !baby) {
+        await createBaby({
+          ...babyInfo,
+          birthWeight: babyInfo.birthWeight ? parseFloat(babyInfo.birthWeight) : undefined,
+          birthHeight: babyInfo.birthHeight ? parseFloat(babyInfo.birthHeight) : undefined,
+          birthHeadCircumference: babyInfo.birthHeadCircumference ? parseFloat(babyInfo.birthHeadCircumference) : undefined,
+        })
+        toast.success('创建成功', '新宝宝信息已成功保存')
+        onCreated?.()
+      } else {
         await updateBaby({
           id: baby.id,
           ...babyInfo,
@@ -101,19 +130,16 @@ export default function BabyInfo() {
           birthHeight: babyInfo.birthHeight ? parseFloat(babyInfo.birthHeight) : undefined,
           birthHeadCircumference: babyInfo.birthHeadCircumference ? parseFloat(babyInfo.birthHeadCircumference) : undefined,
         })
-      } else {
-        await createBaby({
-          ...babyInfo,
-          birthWeight: babyInfo.birthWeight ? parseFloat(babyInfo.birthWeight) : undefined,
-          birthHeight: babyInfo.birthHeight ? parseFloat(babyInfo.birthHeight) : undefined,
-          birthHeadCircumference: babyInfo.birthHeadCircumference ? parseFloat(babyInfo.birthHeadCircumference) : undefined,
-        })
+        toast.success('保存成功', '宝宝信息已成功保存')
       }
       setIsEditing(false)
-      toast.success('保存成功', '宝宝信息已成功保存')
     } catch {
       toast.error('保存失败', '请检查信息后重试')
     }
+  }
+
+  const handleCancelCreate = () => {
+    onCancel?.()
   }
 
   const handleChange = (field: string, value: string) => {
@@ -152,14 +178,18 @@ export default function BabyInfo() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-800 mb-2">宝宝信息</h2>
-        <p className="text-gray-600">管理宝宝的基本信息</p>
+        <h2 className="text-3xl font-bold text-gray-800 mb-2">
+          {isCreating ? '添加新宝宝' : '宝宝信息'}
+        </h2>
+        <p className="text-gray-600">
+          {isCreating ? '填写新宝宝的基本信息' : '管理宝宝的基本信息'}
+        </p>
       </div>
 
       <div className="card">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-gray-800">头像</h3>
-          {baby && (
+          {baby && !isCreating && (
             <button
               onClick={() => setShowAvatarUpload(true)}
               className="btn-secondary"
@@ -278,13 +308,23 @@ export default function BabyInfo() {
       <div className="card">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-gray-800">基本信息</h3>
-          <button
-            onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-            className={isEditing ? 'btn-primary' : 'btn-secondary'}
-            disabled={isAvatarOperation}
-          >
-            {isEditing ? '保存' : '编辑'}
-          </button>
+          <div className="flex gap-2">
+            {isCreating && (
+              <button
+                onClick={handleCancelCreate}
+                className="btn-secondary"
+              >
+                取消
+              </button>
+            )}
+            <button
+              onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+              className={isEditing ? 'btn-primary' : 'btn-secondary'}
+              disabled={isAvatarOperation}
+            >
+              {isEditing ? '保存' : '编辑'}
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

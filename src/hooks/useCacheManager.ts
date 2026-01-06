@@ -191,11 +191,14 @@ export function useCache<T>(
       const cached = cacheManager.get<T>(key, duration)
       if (cached !== null) {
         setData(cached)
+      } else if (autoRefresh) {
+        // 缓存被清除时，自动重新获取数据
+        fetch(true)
       }
     })
 
     return unsubscribe
-  }, [key, duration])
+  }, [key, duration, autoRefresh, fetch])
 
   // 初始化数据
   useEffect(() => {

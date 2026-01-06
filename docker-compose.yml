@@ -9,7 +9,10 @@ services:
     environment:
       - NODE_ENV=production
       - DATABASE_URL=file:/app/data/baby.db
+      # Internal endpoint (for server-side operations within Docker network)
       - MINIO_ENDPOINT=http://minio:9000
+      # External endpoint (for presigned URLs accessible from browser)
+      - MINIO_EXTERNAL_ENDPOINT=http://localhost:9500
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
       - MINIO_BUCKET_NAME=my-baby
@@ -32,6 +35,8 @@ services:
     environment:
       - MINIO_ROOT_USER=minioadmin
       - MINIO_ROOT_PASSWORD=minioadmin
+      # Enable CORS for browser uploads
+      - MINIO_API_CORS_ALLOW_ORIGIN=*
     command: server /data --console-address ":9001"
     volumes:
       - minio-data:/data

@@ -98,88 +98,50 @@ async function processVideoMetadata(file: File): Promise<{
 }
 
 /**
- * Upload directly to storage
+ * Upload via server proxy (for internal network MinIO)
  */
-async function uploadDirectToStorage(
+async function uploadViaServerProxy(
   file: File,
   onProgress: (progress: number) => void
 ): Promise<UploadResult> {
   const isVideo = file.type.startsWith('video/')
 
-  // Process file (HEIC conversion etc.)
-  const { blob, type: processedType } = isVideo
-    ? { blob: new Blob([await file.arrayBuffer()], { type: file.type }), type: file.type }
-    : await convertHeicToJpeg(file)
+  // For images, convert HEIC client-side first
+  let uploadFile: File | Blob = file
+  if (!isVideo) {
+    const { blob } = await convertHeicToJpeg(file)
+    uploadFile = blob
+  }
 
   onProgress(10)
 
-  // Step 1: Get presigned URL
-  const urlResponse = await fetch('/api/photos/generate-upload-url', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      filename: sanitizeFileName(file.name),
-      contentType: processedType,
-      isVideo,
-    }),
-  })
+  // Upload via server proxy API
+  const formData = new FormData()
+  formData.append('file', uploadFile, file.name)
 
-  if (!urlResponse.ok) {
-    const errorData = await urlResponse.json().catch(() => ({}))
-    throw new Error(errorData.error || '获取上传链接失败')
-  }
-
-  const urlData = await urlResponse.json()
   onProgress(20)
 
-  // Step 2: Upload directly to storage
-  const uploadResponse = await fetch(urlData.uploadUrl, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': urlData.contentType,
-    },
-    body: blob,
+  const response = await fetch('/api/photos/upload', {
+    method: 'POST',
+    body: formData,
   })
-
-  if (!uploadResponse.ok) {
-    throw new Error(`上传失败 (HTTP ${uploadResponse.status})`)
-  }
 
   onProgress(70)
 
-  // Video thumbnail and duration
-  let thumbnailUrl: string | null = null
-  let duration: number | null = null
-
-  if (isVideo) {
-    const { thumbnail: thumbnailBlob, duration: videoDuration } = await processVideoMetadata(file)
-    duration = videoDuration
-
-    if (thumbnailBlob && urlData.thumbnailUploadUrl) {
-      try {
-        const thumbResponse = await fetch(urlData.thumbnailUploadUrl, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'image/jpeg' },
-          body: thumbnailBlob,
-        })
-        if (thumbResponse.ok) {
-          thumbnailUrl = urlData.thumbnailPublicUrl
-        }
-      } catch (err) {
-        console.warn('Failed to upload video thumbnail:', err)
-      }
-    }
-    onProgress(90)
-  } else {
-    onProgress(90)
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || errorData.details || `上传失败 (HTTP ${response.status})`)
   }
 
+  const result = await response.json()
+  onProgress(90)
+
   return {
-    url: urlData.publicUrl,
-    mediaType: urlData.mediaType,
-    format: urlData.format,
-    thumbnailUrl,
-    duration,
+    url: result.url,
+    mediaType: result.mediaType,
+    format: result.format,
+    thumbnailUrl: result.thumbnailUrl || null,
+    duration: result.duration || null,
   }
 }
 
@@ -253,7 +215,7 @@ export function usePhotoUpload(options: UsePhotoUploadOptions = {}) {
       ))
 
       try {
-        const uploadResult = await uploadDirectToStorage(item.file, (progress) => {
+        const uploadResult = await uploadViaServerProxy(item.file, (progress) => {
           setUploadFiles(prev => prev.map(f =>
             f.id === item.id ? { ...f, progress } : f
           ))
