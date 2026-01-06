@@ -1,4 +1,5 @@
-# 宝宝成长记录
+# 宝宝成长记录(本地部署版本)
+原项目地址: [mybaby](https://github.com/zhajiahe/my-baby)
 
 基于 Next.js 的宝宝成长记录应用，支持 Docker Compose 一键部署。
 
@@ -14,8 +15,8 @@
 
 ```bash
 # 克隆项目
-git clone https://github.com/zhajiahe/my-baby.git
-cd my-baby
+git clone https://github.com/zhajiahe/mybaby-local.git
+cd mybaby-local
 
 # 启动服务
 docker compose up -d
