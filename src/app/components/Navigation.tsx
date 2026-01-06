@@ -1,10 +1,12 @@
 'use client'
 
 import { Home, TrendingUp, Award, Camera, type LucideIcon } from 'lucide-react'
+import { BabySelector } from './BabySelector'
 
 interface NavigationProps {
   activeTab: string
   setActiveTab: (tab: string) => void
+  onAddBaby?: () => void
 }
 
 interface NavItem {
@@ -20,15 +22,16 @@ const navItems: NavItem[] = [
   { id: 'photos', label: '照片墙', icon: Camera },
 ]
 
-export default function Navigation({ activeTab, setActiveTab }: NavigationProps) {
+export default function Navigation({ activeTab, setActiveTab, onAddBaby }: NavigationProps) {
   return (
     <>
       {/* 桌面端顶部导航 */}
       <nav className="nav-bar sticky top-0 z-50 hidden md:block">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-14">
-            <div className="flex items-center space-x-2">
-              <h1 className="text-lg font-bold">小好小宇宙</h1>
+            <div className="flex items-center space-x-4">
+              <h1 className="text-lg font-bold">宝贝成长日记</h1>
+              <BabySelector onAddBaby={onAddBaby} />
             </div>
             
             <div className="flex space-x-1">
@@ -56,8 +59,10 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
 
       {/* 移动端顶部标题 */}
       <header className="nav-bar sticky top-0 z-50 md:hidden">
-        <div className="flex items-center justify-center h-12 px-4">
-          <h1 className="text-base font-bold">小好小宇宙</h1>
+        <div className="flex items-center justify-between h-12 px-4">
+          <BabySelector onAddBaby={onAddBaby} />
+          <h1 className="text-base font-bold">宝贝成长日记</h1>
+          <div className="w-24" /> {/* Spacer for balance */}
         </div>
       </header>
 

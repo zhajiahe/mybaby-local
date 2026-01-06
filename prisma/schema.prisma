@@ -1,15 +1,12 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -32,7 +29,7 @@ model Baby {
   // Relations
   growthRecords   GrowthRecord[]
   milestones      Milestone[]
-  mediaItems      MediaItem[] // Changed from photos Photo[]
+  mediaItems      MediaItem[]
 
   @@map("babies")
 }
@@ -61,7 +58,7 @@ model Milestone {
   date        DateTime
   title       String
   description String?
-  tags        String[] // Array of tag strings for categorization
+  tags        String?  // JSON string array, e.g., '["tag1","tag2"]'
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -89,6 +86,6 @@ model MediaItem {
   // Relations
   baby        Baby     @relation(fields: [babyId], references: [id], onDelete: Cascade)
 
-  @@map("media_items") // Changed from "photos"
+  @@map("media_items")
   @@index([babyId, date])
 }

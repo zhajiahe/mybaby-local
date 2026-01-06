@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useBaby } from '@/hooks/useBaby'
+import { useBabyContext } from '@/components/providers/BabyProvider'
 import { useToastContext } from '@/components/providers/ToastProvider'
 import Image from 'next/image'
 import { Baby, X } from 'lucide-react'
 
 export default function BabyInfo() {
-  const { baby, loading, error, createBaby, updateBaby } = useBaby()
+  const { currentBaby: baby, loading, error, createBaby, updateBaby } = useBabyContext()
   const toast = useToastContext()
   const [isEditing, setIsEditing] = useState(false)
   const [showAvatarUpload, setShowAvatarUpload] = useState(false)
@@ -131,7 +131,9 @@ export default function BabyInfo() {
     )
   }
 
-  if (error) {
+  // Don't show error when it's just "Failed to fetch babies" - allow creating a new baby
+  // Only show error for actual critical errors
+  if (error && !error.includes('fetch babies') && baby === null) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center py-12">

@@ -1,0 +1,69 @@
+services:
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/data/baby.db
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_BUCKET_NAME=my-baby
+      - MINIO_PUBLIC_URL=http://localhost:9500/my-baby
+    volumes:
+      - sqlite-data:/app/data
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - my-baby-network
+
+  # MinIO Object Storage
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9500:9000"   # API (host:container)
+      - "9501:9001"   # Console
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - my-baby-network
+
+  # MinIO Initialization (create bucket)
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: /bin/sh
+    command: /init-minio.sh
+    volumes:
+      - ./docker/minio-init.sh:/init-minio.sh:ro
+    networks:
+      - my-baby-network
+
+volumes:
+  sqlite-data:
+    driver: local
+  minio-data:
+    driver: local
+
+networks:
+  my-baby-network:
+    driver: bridge
+

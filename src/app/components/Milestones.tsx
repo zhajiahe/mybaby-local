@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useBaby } from '@/hooks/useBaby'
+import { useBabyContext } from '@/components/providers/BabyProvider'
 import { useMilestones } from '@/hooks/useMilestones'
 import { useToastContext } from '@/components/providers/ToastProvider'
 import { Trash2, X } from 'lucide-react'
@@ -16,7 +16,7 @@ interface Milestone {
 }
 
 export default function Milestones() {
-  const { baby } = useBaby()
+  const { currentBaby: baby } = useBabyContext()
   const { milestones, loading, error, createMilestone, updateMilestone, deleteMilestone } = useMilestones(baby?.id)
   const toast = useToastContext()
   

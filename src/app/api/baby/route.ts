@@ -1,25 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // For now, we'll get the first baby (single baby app)
-    // In a multi-user app, you'd filter by user ID
-    const baby = await prisma.baby.findFirst({
-      include: {
-        _count: {
-          select: {
-            growthRecords: true,
-            milestones: true,
-            mediaItems: true,
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    let baby
+    if (id) {
+      // Get specific baby by ID
+      baby = await prisma.baby.findUnique({
+        where: { id },
+        include: {
+          _count: {
+            select: {
+              growthRecords: true,
+              milestones: true,
+              mediaItems: true,
+            },
           },
         },
-      },
-    })
+      })
+    } else {
+      // Fallback: get first baby (for backward compatibility)
+      baby = await prisma.baby.findFirst({
+        include: {
+          _count: {
+            select: {
+              growthRecords: true,
+              milestones: true,
+              mediaItems: true,
+            },
+          },
+        },
+      })
+    }
 
     return NextResponse.json(baby, {
       headers: {
-        // 边缘缓存 60 秒，后台重新验证 5 分钟
         'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
       },
     })

@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-01-06
+
+### Added
+- Docker Compose 一键部署支持
+- MinIO 对象存储集成（替代 Cloudflare R2）
+- 统一类型系统 (`src/types/`)
+- API 响应工具 (`src/lib/api-response.ts`)
+- 存储服务抽象 (`src/lib/storage.ts`)
+
+### Changed
+- 数据库从 PostgreSQL 迁移到 SQLite
+- 包管理器从 npm 迁移到 pnpm
+- PhotoGallery 组件拆分为模块化结构
+- Milestone tags 从数组类型改为 JSON 字符串（SQLite 兼容）
+
+### Removed
+- Cloudflare R2 相关代码
+- @neondatabase/serverless 依赖
+- 旧的 Neon PostgreSQL 配置
+
 ## [Unreleased]
 
 ### Added

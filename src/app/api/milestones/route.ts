@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// Helper: Parse tags from JSON string to array
+function parseTags(tags: string | null): string[] {
+  if (!tags) return []
+  try {
+    return JSON.parse(tags)
+  } catch {
+    return []
+  }
+}
+
+// Helper: Convert tags array to JSON string
+function stringifyTags(tags: string[] | undefined): string | null {
+  if (!tags || tags.length === 0) return null
+  return JSON.stringify(tags)
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -15,9 +31,14 @@ export async function GET(request: NextRequest) {
       orderBy: { date: 'desc' },
     })
 
-    return NextResponse.json(milestones, {
+    // Convert tags from JSON string to array for API response
+    const milestonesWithParsedTags = milestones.map(m => ({
+      ...m,
+      tags: parseTags(m.tags),
+    }))
+
+    return NextResponse.json(milestonesWithParsedTags, {
       headers: {
-        // 里程碑缓存 60 秒
         'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
       },
     })
@@ -37,11 +58,15 @@ export async function POST(request: NextRequest) {
         date: new Date(data.date),
         title: data.title,
         description: data.description || null,
-        tags: data.tags || [],
+        tags: stringifyTags(data.tags),
       },
     })
 
-    return NextResponse.json(milestone, { status: 201 })
+    // Return with parsed tags for consistency
+    return NextResponse.json({
+      ...milestone,
+      tags: parseTags(milestone.tags),
+    }, { status: 201 })
   } catch (error) {
     console.error('Error creating milestone:', error)
     return NextResponse.json({ error: 'Failed to create milestone' }, { status: 500 })

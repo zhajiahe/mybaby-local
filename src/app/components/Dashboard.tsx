@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useBaby } from '@/hooks/useBaby'
+import { useBabyContext } from '@/components/providers/BabyProvider'
 import { useGrowthRecords } from '@/hooks/useGrowthRecords'
 import { useMilestones } from '@/hooks/useMilestones'
 import Image from 'next/image'
@@ -14,7 +14,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ setActiveTab }: DashboardProps) {
-  const { baby, loading: babyLoading } = useBaby()
+  const { currentBaby: baby, loading: babyLoading } = useBabyContext()
   const { records } = useGrowthRecords(baby?.id)
   const { milestones, loading: milestonesLoading } = useMilestones(baby?.id)
 

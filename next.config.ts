@@ -1,29 +1,27 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Enable standalone output for Docker deployment
+  output: 'standalone',
+  
   images: {
     remotePatterns: [
+      // MinIO (local development)
       {
-        protocol: 'https',
-        hostname: '*.r2.dev',
-        port: '',
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '9500',
         pathname: '/**',
       },
+      // MinIO (Docker internal)
       {
-        protocol: 'https', 
-        hostname: '*.r2.cloudflarestorage.com',
-        port: '',
+        protocol: 'http',
+        hostname: 'minio',
+        port: '9500',
         pathname: '/**',
       },
-      {
-        protocol: 'https',
-        hostname: '*.20250530.space',
-        port: '',
-        pathname: '/**',
-      }
     ],
   },
-  /* config options here */
 };
 
 export default nextConfig;

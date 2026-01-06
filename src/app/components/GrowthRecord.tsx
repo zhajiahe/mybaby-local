@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useBaby } from '@/hooks/useBaby'
+import { useBabyContext } from '@/components/providers/BabyProvider'
 import { useGrowthRecords } from '@/hooks/useGrowthRecords'
 import { useToastContext } from '@/components/providers/ToastProvider'
 import { Trash2, X } from 'lucide-react'
@@ -16,7 +16,7 @@ interface GrowthEntry {
 }
 
 export default function GrowthRecord() {
-  const { baby } = useBaby()
+  const { currentBaby: baby } = useBabyContext()
   const { records, loading, error, createRecord, updateRecord, deleteRecord } = useGrowthRecords(baby?.id)
   const toast = useToastContext()
   
