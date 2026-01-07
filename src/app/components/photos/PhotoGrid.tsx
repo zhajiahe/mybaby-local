@@ -139,3 +139,4 @@ function MediaCard({ item, onClick }: MediaCardProps) {
   )
 }
 
+

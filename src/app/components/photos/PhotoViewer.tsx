@@ -256,3 +256,4 @@ export function PhotoViewer({ item, onClose, onDelete, onUpdate }: PhotoViewerPr
   )
 }
 
+

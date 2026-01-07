@@ -32,7 +32,7 @@ docker compose up -d
 通过设置 `ACCESS_PASSWORD` 环境变量启用密码保护：
 
 ```bash
-# 方法一：使用 .env 文件
+# 方法一：使用 .env 文件(建议，防止忘记)
 echo "ACCESS_PASSWORD=your_password" >> .env
 docker compose up -d
 

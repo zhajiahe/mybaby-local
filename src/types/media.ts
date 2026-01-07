@@ -57,3 +57,4 @@ export interface PresignedUploadResult {
   thumbnailPublicUrl?: string | null
 }
 
+
