@@ -37,9 +37,12 @@ function arrayBufferToHex(buffer: ArrayBuffer): string {
  * 使用 Web Crypto API 计算 HMAC-SHA256
  */
 async function hmacSha256(key: string, message: string): Promise<string> {
+  const keyData = stringToUint8Array(key)
+  const messageData = stringToUint8Array(message)
+  
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
-    stringToUint8Array(key),
+    keyData.buffer as ArrayBuffer,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign']
@@ -48,7 +51,7 @@ async function hmacSha256(key: string, message: string): Promise<string> {
   const signature = await crypto.subtle.sign(
     'HMAC',
     cryptoKey,
-    stringToUint8Array(message)
+    messageData.buffer as ArrayBuffer
   )
   
   return arrayBufferToHex(signature)
