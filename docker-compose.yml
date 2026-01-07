@@ -9,6 +9,8 @@ services:
     environment:
       - NODE_ENV=production
       - DATABASE_URL=file:/app/data/baby.db
+      # 访问密码（可选，留空则不启用密码保护）
+      - ACCESS_PASSWORD=${ACCESS_PASSWORD:-}
       # Internal endpoint (for server-side operations within Docker network)
       - MINIO_ENDPOINT=http://minio:9000
       # External endpoint (for presigned URLs accessible from browser)
