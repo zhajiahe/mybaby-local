@@ -10,6 +10,7 @@
 - 随心记（里程碑、日记）
 - 媒体相册（照片/视频，支持 HEIC）
 - 成长曲线图表
+- 可选密码保护（7 天有效期）
 
 ## 一键部署
 
@@ -26,17 +27,22 @@ docker compose up -d
 
 ## 自定义配置
 
-### 远程访问配置
+### 密码保护（可选）
 
-默认配置适用于本地访问。如需远程访问，修改 `docker-compose.yml`：
+通过设置 `ACCESS_PASSWORD` 环境变量启用密码保护：
 
-```yaml
-app:
-  environment:
-    # 改为服务器 IP 或域名
-    - MINIO_EXTERNAL_ENDPOINT=http://你的服务器IP:9500
-    - MINIO_PUBLIC_URL=http://你的服务器IP:9500/my-baby
+```bash
+# 方法一：使用 .env 文件
+echo "ACCESS_PASSWORD=your_password" >> .env
+docker compose up -d
+
+# 方法二：直接设置环境变量
+ACCESS_PASSWORD=your_password docker compose up -d
 ```
+
+- 默认为空，不启用密码保护
+- 设置后需输入密码才能访问应用
+- 验证通过后 7 天内无需再次输入
 
 ### 内网模式（推荐）
 
