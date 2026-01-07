@@ -1,5 +1,3 @@
-import { createHmac } from 'crypto'
-
 // Cookie 配置
 export const AUTH_COOKIE_NAME = 'baby_access_token'
 export const AUTH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 // 7 天（秒）
@@ -20,22 +18,57 @@ export function isAuthEnabled(): boolean {
 }
 
 /**
- * 生成认证 token
+ * 将字符串转换为 Uint8Array
+ */
+function stringToUint8Array(str: string): Uint8Array {
+  return new TextEncoder().encode(str)
+}
+
+/**
+ * 将 ArrayBuffer 转换为十六进制字符串
+ */
+function arrayBufferToHex(buffer: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+/**
+ * 使用 Web Crypto API 计算 HMAC-SHA256
+ */
+async function hmacSha256(key: string, message: string): Promise<string> {
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    stringToUint8Array(key),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  )
+  
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    cryptoKey,
+    stringToUint8Array(message)
+  )
+  
+  return arrayBufferToHex(signature)
+}
+
+/**
+ * 生成认证 token (异步版本)
  * 格式: {expireAt}.{signature}
  * signature = HMAC-SHA256(expireAt, password)
  */
-export function generateAuthToken(password: string): string {
+export async function generateAuthToken(password: string): Promise<string> {
   const expireAt = Date.now() + AUTH_COOKIE_MAX_AGE * 1000
-  const signature = createHmac('sha256', password)
-    .update(expireAt.toString())
-    .digest('hex')
+  const signature = await hmacSha256(password, expireAt.toString())
   return `${expireAt}.${signature}`
 }
 
 /**
- * 验证认证 token
+ * 验证认证 token (异步版本)
  */
-export function verifyAuthToken(token: string, password: string): boolean {
+export async function verifyAuthToken(token: string, password: string): Promise<boolean> {
   const parts = token.split('.')
   if (parts.length !== 2) {
     return false
@@ -50,10 +83,7 @@ export function verifyAuthToken(token: string, password: string): boolean {
   }
 
   // 验证签名
-  const expectedSignature = createHmac('sha256', password)
-    .update(expireAtStr)
-    .digest('hex')
-
+  const expectedSignature = await hmacSha256(password, expireAtStr)
   return signature === expectedSignature
 }
 
@@ -67,4 +97,3 @@ export function verifyPassword(inputPassword: string): boolean {
   }
   return inputPassword === password
 }
-

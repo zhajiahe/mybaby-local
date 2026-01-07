@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true })
     }
 
-    const token = generateAuthToken(accessPassword)
+    const token = await generateAuthToken(accessPassword)
 
     // 设置 cookie
     const response = NextResponse.json({ success: true })
@@ -52,4 +52,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

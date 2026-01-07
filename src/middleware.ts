@@ -14,7 +14,7 @@ function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(path => pathname.startsWith(path))
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const password = process.env.ACCESS_PASSWORD?.trim()
 
@@ -28,7 +28,7 @@ export function middleware(request: NextRequest) {
     // 如果已登录且访问登录页，重定向到首页
     if (pathname === '/login') {
       const token = request.cookies.get(AUTH_COOKIE_NAME)?.value
-      if (token && verifyAuthToken(token, password)) {
+      if (token && await verifyAuthToken(token, password)) {
         return NextResponse.redirect(new URL('/', request.url))
       }
     }
@@ -37,7 +37,7 @@ export function middleware(request: NextRequest) {
 
   // 验证 token
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value
-  if (!token || !verifyAuthToken(token, password)) {
+  if (!token || !await verifyAuthToken(token, password)) {
     // 未认证，重定向到登录页
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('from', pathname)
@@ -58,4 +58,3 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }
-
