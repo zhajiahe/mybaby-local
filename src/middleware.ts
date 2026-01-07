@@ -6,6 +6,7 @@ import { AUTH_COOKIE_NAME, verifyAuthToken } from '@/lib/auth'
 const PUBLIC_PATHS = [
   '/login',
   '/api/auth',
+  '/api/media',  // 媒体文件代理（URL 使用随机 UUID，页面已受保护）
   '/_next',
   '/favicon.ico',
 ]
